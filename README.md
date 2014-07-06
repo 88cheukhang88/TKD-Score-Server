@@ -60,7 +60,6 @@ $env:TKD_ENV="production"
 
 
 
-
 Testing
 ======
 
@@ -75,4 +74,9 @@ grunt test
 
 Integration tests require a mongodb server to running
 
+
+License
+======
+MIT License
+Copyright 2014 Mick Crozier
 
