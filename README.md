@@ -1,3 +1,5 @@
+##IN DEVLEOPMENT - NOT READY YET
+
 TKD-Score-Server
 ================
 [![Build Status](https://travis-ci.org/MickCrozier/TKD-Score-Server.svg?branch=master)](https://travis-ci.org/MickCrozier/TKD-Score-Server)
