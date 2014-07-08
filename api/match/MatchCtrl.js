@@ -16,7 +16,19 @@ this.routePrefix = '/match';
 require(__dirname + '/../blueprints/rest_crud.js')(this);
 ///////////////////////////////////////////////////////////////
 
-	
+this.pauseResumeMatch = function pauseResumeMatch(req, res, next) {
+	//log.silly(req.ip + ' has requested user id ' + req.params.id);
+	var search = {};
+	search._id = req.params.id;
+
+	Collection.findOne(search, function(err, match) {
+		if(err) {return next(err);}
+		if(!match) {return res.notFound('Could not find match');} 
+
+		match.pauseResume();
+		res.ok(match);
+	});
+};		
 
 /*********************
 this.routes = [
@@ -65,7 +77,15 @@ this.routes = [
 		method: 'delete',
 		url: this.routePrefix + '/:id',
 		action: this.destroy,
-	}
+	},
+
+	
+	/// match commands
+	{
+		method: 'get',
+		url: this.routePrefix + '/:id/pauseresume',
+		action: this.pauseResumeMatch,
+	},
 ];
 
 
