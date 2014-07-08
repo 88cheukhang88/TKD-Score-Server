@@ -111,13 +111,9 @@ Schema.methods.pauseResume = function() {
 			this.matchStatus = 'break';
 			break;
 	}
+	this.save();
 	return this.matchStatus;
-	
 };
-
-
-
-
 
 
 

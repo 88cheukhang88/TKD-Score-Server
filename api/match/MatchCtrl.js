@@ -30,6 +30,15 @@ this.pauseResumeMatch = function pauseResumeMatch(req, res, next) {
 	});
 };		
 
+
+///// Need to have a new or enhanced findId method that includes 
+///// subscription to the socket.io room for the match
+
+
+
+
+
+
 /*********************
 this.routes = [
 	{

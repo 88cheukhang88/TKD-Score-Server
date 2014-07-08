@@ -17,6 +17,8 @@ var config = require('./config.js');
 
 var express = require('express');
 var app = module.exports = express();
+var server = require('http').Server(app);
+io = require('socket.io')(server);
 
 ///// Load config into app so we can access it easily
 _.forEach(config, function(arg, key) {
@@ -57,7 +59,7 @@ Utils.loadAllFilesIntoObj(__dirname + '/api/responses/', express.response);
 
 
 
-
+app.use('/', express.static(__dirname + '/static'));
 
 
 
@@ -229,7 +231,7 @@ switch(app.get('env')) {
 /* Launch Application									*/
 /********************************************************/
 mongoose.connection.once('open', function(){
-	app.listen(app.get('port'));
+	server.listen(app.get('port'));
 	
 	log.info('Mongoose has opened a connection to ' + app.get('mongo_uri'));
 	log.msg('Console will show logs up to ' + app.get('loglevel') + ' messages');
@@ -238,4 +240,27 @@ mongoose.connection.once('open', function(){
 
 	app.set('state', 'ready');
 	app.emit('ready');
+
+
+////////// TEST ONLY - REMOVE ASAP
+	var matchCollection = require('./api/Match/MatchMdl.js');
+    matchCollection.create({}, function(err, match){
+    	if(err) {
+			console.log(err);
+			throw new Error(err);
+		}
+		
+	    match.roundTimer.on('time', function(time) {
+	    	io.emit('time', time);
+	    });
+    });
+//////////
+
+});
+
+io.on('connection', function (socket) {
+    console.log('A socket connected with id:' + socket.id);
+    socket.on('disconnect', function(){
+	    console.log('socket with id:' + socket.id + ' disconnected');
+	});
 });

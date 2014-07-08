@@ -1,0 +1,54 @@
+<html>
+<head>
+<script src="socket.io.js"></script>
+<script src="jquery.js"></script>
+<script>
+function init() {
+	var socket = io.connect();
+
+	socket.on('time', function(time){
+    	$('#clock').html(time.clock);
+  	});
+
+  	var jqxhr = $.ajax( "api/match" )
+  	.done(function(data) {
+  		matchData = data
+  		var html = '';
+    	for(var i in data) {
+    		html += '<button onclick="getMatch(' + i + ')">Match ' + i + '</button>'
+    	}
+    	$('#matchlist').html(html);
+  	})
+  	.fail(function() {
+    	alert( "error" );
+  	})
+};
+
+function getMatch(id) {
+	matchId = id;
+};
+
+function pauseResume() {
+	var jqxhr = $.ajax( 'api/match/' + matchData[matchId]._id + '/pauseresume' )
+  	.done(function() {
+  		
+  	})
+  	.fail(function() {
+    	alert( "error" );
+  	})
+}
+
+
+</script>
+</head>
+<body onload="init()">
+<div id="clock">
+
+</div>
+
+<div id="matchlist">
+
+</div>
+<button onclick="pauseResume()">Pause / Resume</button>
+</body>
+</html>
