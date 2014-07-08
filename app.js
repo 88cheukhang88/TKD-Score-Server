@@ -149,7 +149,7 @@ validator.hookMsg(
 
 Utils.loadController(app, require('./api/Hello/HelloCtrl.js'));
 Utils.loadController(app, require('./api/Logger/LoggerCtrl.js'));
-
+Utils.loadController(app, require('./api/Match/MatchCtrl.js'));
 
 
 
