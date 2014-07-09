@@ -151,7 +151,7 @@ validator.hookMsg(
 
 Utils.loadController(app, require(__dirname + '/api/Hello/HelloCtrl.js'));
 Utils.loadController(app, require(__dirname + '/api/Logger/LoggerCtrl.js'));
-Utils.loadController(app, require(__dirname + '/api/match/MatchCtrl.js'));
+Utils.loadController(app, require(__dirname + '/api/Match/MatchCtrl.js'));
 
 
 
