@@ -242,24 +242,13 @@ mongoose.connection.once('open', function(){
 	app.emit('ready');
 
 
-////////// TEST ONLY - REMOVE ASAP
-	var matchCollection = require('./api/Match/MatchMdl.js');
-    matchCollection.create({}, function(err, match){
-    	if(err) {
-			console.log(err);
-			throw new Error(err);
-		}
-		
-	    match.roundTimer.on('time', function(time) {
-	    	io.emit('time', time);
-	    });
-    });
-//////////
+
 
 });
 
 io.on('connection', function (socket) {
     console.log('A socket connected with id:' + socket.id);
+    socket.join("MatchRoom");
     socket.on('disconnect', function(){
 	    console.log('socket with id:' + socket.id + ' disconnected');
 	});

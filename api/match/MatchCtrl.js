@@ -1,7 +1,7 @@
 
 
 var log = require('../../lib/logger.js');
-
+var Stopwatch = require('timer-stopwatch');
 
 var Collection = this.Collection = require('./MatchMdl.js');
 var self = this;
@@ -16,24 +16,118 @@ this.routePrefix = '/match';
 require(__dirname + '/../blueprints/rest_crud.js')(this);
 ///////////////////////////////////////////////////////////////
 
+
+
+var roundTimer = [];
+var breakTimer = [];
+var pauseWatch = [];
+
+
 this.pauseResumeMatch = function pauseResumeMatch(req, res, next) {
 	//log.silly(req.ip + ' has requested user id ' + req.params.id);
 	var search = {};
-	search._id = req.params.id;
+	var id = req.params.id;
 
-	Collection.findOne(search, function(err, match) {
+	self._getMatchById(id, function(err, match) {
 		if(err) {return next(err);}
 		if(!match) {return res.notFound('Could not find match');} 
-
-		match.pauseResume();
+		console.log('pause resume match: ' + match._id);
+		
+		self._pauseResumeMatch(match);
 		res.ok(match);
 	});
-};		
+};	
+
+this._pauseResumeMatch = function _pauseResumeMatch(match) {
+	if(!roundTimer[match._id]) {
+		_createTimers(match);
+	}
+
+	switch(match.matchStatus) {
+		case 'round':
+			roundTimer[match._id].stop();
+			pauseWatch[match._id].start();
+			match.matchStatus = 'pausedround';
+			break;
+		case 'break':
+			roundTimer[match._id].stop();
+			pauseWatch[match._id].start();
+			match.matchStatus = 'pausedbreak';
+			break;
+		case 'pausedround':
+		case 'pending':
+			pauseWatch[match._id].stop();
+			roundTimer[match._id].start();
+			match.matchStatus = 'round';
+			break;
+		case 'pausedbreak':
+			pauseWatch[match._id].stop();
+			breakTimer[match._id].start();
+			match.matchStatus = 'break';
+			break;
+	}
+	match.save();
+	return match.matchStatus;
+};	
 
 
-///// Need to have a new or enhanced findId method that includes 
-///// subscription to the socket.io room for the match
+this._getMatchById = function _getMatchById(id, cb) {
+	var search = {
+		_id: id
+	};
 
+	Collection.findOne(search, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, false);}
+		
+
+		if(!roundTimer[id]) {
+			_createTimers(match);
+		}
+
+		roundTimer[id].on('time', function(time) {
+	    	io.emit('time', time);
+	    });
+
+		cb(null, match);
+	});
+};
+
+this._getRoundTimerMS = function _getRoundTimerMS(match) {
+	if(!roundTimer[match._id]) {_createTimers(match);}
+	return roundTimer[match._id].ms;
+};
+
+this._getBreakTimerMS = function _getBreakTimerMS(match) {
+	if(!roundTimer[match._id]) {_createTimers(match);}
+	return breakTimer[match._id].ms;
+};
+
+this._getPauseWatchMS = function _getPauseWatchMS(match) {
+	if(!roundTimer[match._id]) {_createTimers(match);}
+	return pauseWatch[match._id].ms;
+};
+
+var _createTimers = function _createTimers(match) {
+	var id = match._id;
+	roundTimer[id] = new Stopwatch(match.roundTimeMS);
+	breakTimer[id] = new Stopwatch(match.breakTimeMS);
+	pauseWatch[id] = new Stopwatch();
+};
+
+
+
+// override blueprint
+this.findId = function findId(req, res, next) {
+	//log.silly(req.ip + ' has requested user id ' + req.params.id);
+	var search = {};
+	var id = req.params.id;
+	self._getMatchById(id, function(err, match) { 
+		if(err) {return next(err);}
+		if(!match) {return res.notFound('Could not find item');}
+		res.ok(match);
+	});
+};	
 
 
 

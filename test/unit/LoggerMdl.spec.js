@@ -13,7 +13,6 @@ var expect = require('expect.js');			/////////
 
 var sinon = require('sinon');
 
-
 describe('Logger Model', function() {
 	var LoggerCollection = require('../../api/Logger/LoggerMdl.js');
 

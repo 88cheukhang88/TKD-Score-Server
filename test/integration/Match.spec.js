@@ -36,32 +36,63 @@ describe('Match timers and clocks', function() {
 	afterEach(emptyTestData);
 
 
-	it('should have a round timer available', function(done) {
-		expect(testMatch.roundTimer).to.be.ok();
-		done();
-	});
 
 	it('should countdown, pause, then continue', function(done) {
+		var matchCtrl = require('../../api/Match/MatchCtrl.js');
+
+
+		matchCtrl._getMatchById(testMatch._id, function(err, match) {
+			
+			var startTime = matchCtrl._getRoundTimerMS(match);
+			var splittime = 0;
+			matchCtrl._pauseResumeMatch(match);
+			setTimeout(function(){
+				matchCtrl._pauseResumeMatch(match);
+				splittime = matchCtrl._getRoundTimerMS(match);
+				expect(splittime).to.be.below(startTime);
+			}, 60);
+
+			setTimeout(function(){
+				expect(splittime).to.be(matchCtrl._getRoundTimerMS(match));
+				matchCtrl._pauseResumeMatch(match);
+			}, 80);
+
+			setTimeout(function(){
+				matchCtrl._pauseResumeMatch(match);
+				expect(matchCtrl._getRoundTimerMS(match)).to.be.below(splittime);
+				done();
+			}, 120);
+		});
+
 		
-		var startTime = testMatch.roundTimer.ms;
-		var splittime = 0;
-		testMatch.roundTimer.start();
-		setTimeout(function(){
-			testMatch.roundTimer.stop();
-			splittime = testMatch.roundTimer.ms;
-			expect(splittime).to.be.below(startTime);
-		}, 20);
+	});
 
-		setTimeout(function(){
-			expect(splittime).to.be(testMatch.roundTimer.ms);
-			testMatch.roundTimer.start();
-		}, 40);
 
-		setTimeout(function(){
-			testMatch.roundTimer.stop();
-			expect(testMatch.roundTimer.ms).to.be.below(splittime);
-			done();
-		}, 60);
+	xit('should have independant control over different matches', function(done) {
+		var testMatch2 = {};
+
+		var MatchCollection = require('../../api/Match/MatchMdl.js');
+
+		MatchCollection.create(testData.fakeMatch2, function(err, returnedMatch) {
+			if(err) {
+				console.log(err);
+				throw new Error(err);
+			}
+
+			testMatch2 = returnedMatch;
+			testMatch2.roundTimer.start();
+			setTimeout(function(){
+				testMatch2.roundTimer.stop();
+				expect(testMatch.roundTimer.ms).to.be.above(testMatch2.roundTimer.ms);
+				done();
+			}, 500);
+
+
+
+			
+		});
+
+
 	});
 });
 

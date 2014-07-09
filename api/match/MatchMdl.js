@@ -3,7 +3,6 @@
 var mongoose = require('mongoose');
 var mongules = require('mongules');
 var timestamps = require('mongoose-timestamp');
-var Stopwatch = require('timer-stopwatch');
 
 var SchemaName = "Match";
 var Schema = new mongoose.Schema({
@@ -53,7 +52,7 @@ var Schema = new mongoose.Schema({
 
 	roundTimeMS: {
 		type: Number,
-		default: 0,
+		default: 120000,
 	},
 
 	breakLengthMS: {
@@ -63,7 +62,7 @@ var Schema = new mongoose.Schema({
 
 	breakTimeMS: {
 		type: Number,
-		default: 0,
+		default: 60000,
 	},
 
 	pauseTime: {
@@ -74,7 +73,12 @@ var Schema = new mongoose.Schema({
 	matchStatus: {
 		type: String, // round, break, pending, complete, pausedround, pausedbreak 
 		default: 'pending',
-	}
+	},
+
+
+
+
+
 
 });
 Schema.plugin(timestamps);
@@ -82,38 +86,8 @@ Schema.plugin(mongules.validate);
 
 
 
-Schema.methods.roundTimer = new Stopwatch(120000);
-Schema.methods.breakTimer = new Stopwatch(60000);
-Schema.methods.pauseWatch = new Stopwatch();
 
 
-Schema.methods.pauseResume = function() {
-	switch(this.matchStatus) {
-		case 'round':
-			this.roundTimer.stop();
-			this.pauseWatch.start();
-			this.matchStatus = 'pausedround';
-			break;
-		case 'break':
-			this.roundTimer.stop();
-			this.pauseWatch.start();
-			this.matchStatus = 'pausedbreak';
-			break;
-		case 'pausedround':
-		case 'pending':
-			this.pauseWatch.stop();
-			this.roundTimer.start();
-			this.matchStatus = 'round';
-			break;
-		case 'pausedbreak':
-			this.pauseWatch.stop();
-			this.breakTimer.start();
-			this.matchStatus = 'break';
-			break;
-	}
-	this.save();
-	return this.matchStatus;
-};
 
 
 

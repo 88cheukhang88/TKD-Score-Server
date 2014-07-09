@@ -2,7 +2,7 @@
 
 TKD-Score-Server
 ================
-[![Build Status](https://travis-ci.org/MickCrozier/TKD-Score-Server.svg?branch=master)](https://travis-ci.org/MickCrozier/TKD-Score-Server)
+Build Status: [![Codeship Status for MickCrozier/TKD-Score-Server](https://codeship.io/projects/88ab60a0-e98e-0131-eba0-368dc75eab9e/status)](https://codeship.io/projects/26201)
 
 
 Part of TKD Score
