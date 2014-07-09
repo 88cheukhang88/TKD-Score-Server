@@ -156,7 +156,6 @@ Utils.loadController(app, require(__dirname + '/api/Match/MatchCtrl.js'));
 
 
 
-
 /********************************************************/
 /* Load Error Handler									*/
 /********************************************************/
