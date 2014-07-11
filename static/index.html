@@ -3,11 +3,12 @@
 <script src="socket.io.js"></script>
 <script src="jquery.js"></script>
 <script>
+var socket = {};
 function init() {
-	var socket = io.connect();
+	socket = io.connect();
 
 	socket.on('time', function(time){
-    	$('#clock').html(time.clock);
+    	$('#clock').html(time.clock + '  ' + time.ms);
   	});
 
 	printMatchList();
@@ -43,7 +44,7 @@ function getMatch(id) {
 	var jqxhr = $.ajax( "api/match/" + id)
   	.done(function(data) {
   		matchId = id;
-  		
+  		socket.emit('join', {id:id});
   	})
   	.fail(function() {
     	alert( "error" );

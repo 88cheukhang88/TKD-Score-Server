@@ -42,24 +42,24 @@ describe('Match timers and clocks', function() {
 
 
 		matchCtrl._getMatchById(testMatch._id, function(err, match) {
-			
-			var startTime = matchCtrl._getRoundTimerMS(match);
+
+			var startTime = match.getRoundTimer().ms;
 			var splittime = 0;
-			matchCtrl._pauseResumeMatch(match);
+			match.pauseResumeMatch();
 			setTimeout(function(){
-				matchCtrl._pauseResumeMatch(match);
-				splittime = matchCtrl._getRoundTimerMS(match);
+				match.pauseResumeMatch();
+				splittime = match.getRoundTimer().ms;
 				expect(splittime).to.be.below(startTime);
 			}, 60);
 
 			setTimeout(function(){
-				expect(splittime).to.be(matchCtrl._getRoundTimerMS(match));
-				matchCtrl._pauseResumeMatch(match);
+				expect(splittime).to.be(match.getRoundTimer().ms);
+				match.pauseResumeMatch();
 			}, 80);
 
 			setTimeout(function(){
-				matchCtrl._pauseResumeMatch(match);
-				expect(matchCtrl._getRoundTimerMS(match)).to.be.below(splittime);
+				match.pauseResumeMatch();
+				expect(match.getRoundTimer().ms).to.be.below(splittime);
 				done();
 			}, 120);
 		});
@@ -68,7 +68,7 @@ describe('Match timers and clocks', function() {
 	});
 
 
-	xit('should have independant control over different matches', function(done) {
+	it('should have independant control over different matches', function(done) {
 		var testMatch2 = {};
 
 		var MatchCollection = require('../../api/Match/MatchMdl.js');
@@ -80,16 +80,13 @@ describe('Match timers and clocks', function() {
 			}
 
 			testMatch2 = returnedMatch;
-			testMatch2.roundTimer.start();
+			testMatch2.getRoundTimer().start();
 			setTimeout(function(){
-				testMatch2.roundTimer.stop();
-				expect(testMatch.roundTimer.ms).to.be.above(testMatch2.roundTimer.ms);
+				testMatch2.getRoundTimer().stop();
+				expect(testMatch.getRoundTimer().ms).to.be.above(testMatch2.getRoundTimer().ms);
 				done();
-			}, 500);
+			}, 200);
 
-
-
-			
 		});
 
 

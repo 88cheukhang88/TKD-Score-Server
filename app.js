@@ -245,10 +245,31 @@ mongoose.connection.once('open', function(){
 
 });
 
+
+
+/////////////////////////
+// Real time Socket IO
+// Needs major refactoring into a more MVC structure
+// Need a way to test!
+/////////////////////////
+
 io.on('connection', function (socket) {
     console.log('A socket connected with id:' + socket.id);
-    socket.join("MatchRoom");
+
     socket.on('disconnect', function(){
 	    console.log('socket with id:' + socket.id + ' disconnected');
 	});
+
+    // join
+    // Which match to listen to
+	var currentMatchId = 0;
+	socket.on('join', function(data) {
+		socket.leave(currentMatchId);
+		var id = data.id;
+		
+		socket.join(id);
+		currentMatchId = id;
+	});
 });
+
+

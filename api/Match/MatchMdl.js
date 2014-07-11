@@ -3,6 +3,7 @@
 var mongoose = require('mongoose');
 var mongules = require('mongules');
 var timestamps = require('mongoose-timestamp');
+var Stopwatch = require('timer-stopwatch');
 
 var SchemaName = "Match";
 var Schema = new mongoose.Schema({
@@ -89,14 +90,62 @@ Schema.plugin(mongules.validate);
 
 
 
-
-
 Schema.methods.toString = function() {
 	return '[match] ' + this.player1 + ' vs. ' + this.player2;
 };
 
 Schema.statics.toString = function() {
 	return "[model " + SchemaName + "Model]";
+};
+
+
+
+Schema.methods.pauseResumeMatch = function () {
+	if(!roundTimer[this._id]) {
+		_createTimers(this);
+	}
+
+	switch(this.matchStatus) {
+		case 'round':
+			roundTimer[this._id].stop();
+			pauseWatch[this._id].start();
+			this.matchStatus = 'pausedround';
+			break;
+		case 'break':
+			roundTimer[this._id].stop();
+			pauseWatch[this._id].start();
+			this.matchStatus = 'pausedbreak';
+			break;
+		case 'pausedround':
+		case 'pending':
+			pauseWatch[this._id].stop();
+			roundTimer[this._id].start();
+			this.matchStatus = 'round';
+			break;
+		case 'pausedbreak':
+			pauseWatch[this._id].stop();
+			breakTimer[this._id].start();
+			this.matchStatus = 'break';
+			break;
+	}
+	this.save();
+	return this.matchStatus;
+};	
+
+
+Schema.methods.getRoundTimer = function () {
+	if(!roundTimer[this._id]) {_createTimers(this);}
+	return roundTimer[this._id];
+};
+
+Schema.methods.getBreakTimer = function () {
+	if(!breakTimer[this._id]) {_createTimers(this);}
+	return breakTimer[this._id];
+};
+
+Schema.methods.getPauseWatch = function () {
+	if(!pauseWatch[this._id]) {_createTimers(this);}
+	return pauseWatch[this._id];
 };
 
 
@@ -109,3 +158,25 @@ try {
 }
 
 module.exports = Model;
+
+
+
+
+/////////////////////////////////////////////
+// Timer managment
+//
+// The timers cannot be stored by mongo. 
+// They are memory only and need to be created on demand
+/////////////////////////////////////////////
+
+var roundTimer = [];
+var breakTimer = [];
+var pauseWatch = [];
+
+
+var _createTimers = function _createTimers(match) {
+	roundTimer[match._id] = new Stopwatch(match.roundTimeMS);
+	breakTimer[match._id] = new Stopwatch(match.breakTimeMS);
+	pauseWatch[match._id] = new Stopwatch();
+};
+
