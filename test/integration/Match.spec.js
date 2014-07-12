@@ -36,35 +36,29 @@ describe('Match timers and clocks', function() {
 	afterEach(emptyTestData);
 
 
-
 	it('should countdown, pause, then continue', function(done) {
-		var matchCtrl = require('../../api/Match/MatchCtrl.js');
 
+		var match = testMatch;
 
-		matchCtrl._getMatchById(testMatch._id, function(err, match) {
+		var startTime = match.getRoundTimer().ms;
+		var splittime = 0;
+		match.pauseResume();
+		setTimeout(function(){
+			match.pauseResume();
+			splittime = match.getRoundTimer().ms;
+			expect(splittime).to.be.below(startTime);
+		}, 60);
 
-			var startTime = match.getRoundTimer().ms;
-			var splittime = 0;
-			match.pauseResumeMatch();
-			setTimeout(function(){
-				match.pauseResumeMatch();
-				splittime = match.getRoundTimer().ms;
-				expect(splittime).to.be.below(startTime);
-			}, 60);
+		setTimeout(function(){
+			expect(splittime).to.be(match.getRoundTimer().ms);
+			match.pauseResume();
+		}, 80);
 
-			setTimeout(function(){
-				expect(splittime).to.be(match.getRoundTimer().ms);
-				match.pauseResumeMatch();
-			}, 80);
-
-			setTimeout(function(){
-				match.pauseResumeMatch();
-				expect(match.getRoundTimer().ms).to.be.below(splittime);
-				done();
-			}, 120);
-		});
-
-		
+		setTimeout(function(){
+			match.pauseResume();
+			expect(match.getRoundTimer().ms).to.be.below(splittime);
+			done();
+		}, 120);
 	});
 
 
@@ -89,8 +83,24 @@ describe('Match timers and clocks', function() {
 
 		});
 
-
 	});
+
+
+	xit('should create roundTimers of different lengths', function(done) {
+		
+		done();
+	});
+
+	xit('should auto start the break clock on round end', function(done) {
+		
+		done();
+	});
+
+	xit('should auto start the pause clock on break end', function(done) {
+		
+		done();
+	});
+
 });
 
 

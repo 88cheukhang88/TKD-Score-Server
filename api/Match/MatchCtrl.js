@@ -17,50 +17,19 @@ require(__dirname + '/../blueprints/rest_crud.js')(this);
 ///////////////////////////////////////////////////////////////
 
 
-
-var roundTimer = [];
-var breakTimer = [];
-var pauseWatch = [];
-// Should extract these with their functionality into a secondary collection.
-// no wait - add these to the MatchCollection but outside of mongoose.
-// Then use mongoose methods to load the timers if not already (as in code below)
-
-
-
-this.pauseResumeMatch = function pauseResumeMatch(req, res, next) {
-	//log.silly(req.ip + ' has requested user id ' + req.params.id);
-	var search = {};
+this.pauseResumeMatch = function (req, res, next) {
 	var id = req.params.id;
-
-	self._getMatchById(id, function(err, match) {
+	Collection.pauseResumeMatch(id, function(err, match) {	
 		if(err) {return next(err);}
-		if(!match) {return res.notFound('Could not find match');} 
-		console.log('pause resume match: ' + match._id);
-		
-		match.pauseResumeMatch(match);
+		if(!match) {return res.notFound('Could not find match');} 		
 		res.ok(match);
 	});
-};	
+};
 
-
-
-
-this._getMatchById = function _getMatchById(id, cb) {
-	var search = {
-		_id: id
-	};
-
-	Collection.findOne(search, function(err, match) {
-		if(err) {return cb(err);}
-		if(!match) {return cb(null, false);}
-		
-
-
-		match.getRoundTimer().on('time', function(time) {
-	    	io.in(match._id + "").emit('time', time);
-	    });
-
-		cb(null, match);
+this.socketPauseResumeMatch = function(data) {
+	var id = data.id;
+	Collection.pauseResumeMatch(id, function(err, match) {
+		if(err) {return log.error(err);}
 	});
 };
 
@@ -70,15 +39,32 @@ this._getMatchById = function _getMatchById(id, cb) {
 
 
 
+
 // override blueprint
 this.findId = function findId(req, res, next) {
-	//log.silly(req.ip + ' has requested user id ' + req.params.id);
-	var search = {};
-	var id = req.params.id;
-	self._getMatchById(id, function(err, match) { 
+
+
+	Collection.findById(req.params.id, function(err, match) {
 		if(err) {return next(err);}
 		if(!match) {return res.notFound('Could not find item');}
 
+		match.getRoundTimer().on('time', function sendTime(time) {
+	    	io.in(match._id + "").emit('roundtime', time);
+	    });
+	    match.getRoundTimer().on('done', function sendTime(time) {
+	    	io.in(match._id + "").emit('done');
+	    });
+
+	    match.getBreakTimer().on('time', function sendTime() {
+	    	io.in(match._id + "").emit('breaktime', time);
+	    });
+	    match.getBreakTimer().on('almostdone', function sendTime() {
+	    	io.in(match._id + "").emit('almostdone');
+	    });
+
+	    match.getPauseWatch().on('time', function sendTime(time) {
+	    	io.in(match._id + "").emit('pausetime', time);
+	    });
 		res.ok(match);
 	});
 };	
@@ -142,6 +128,11 @@ this.routes = [
 		method: 'get',
 		url: this.routePrefix + '/:id/pauseresume',
 		action: this.pauseResumeMatch,
+	},
+	{
+		method: 'socket',
+		event: 'pauseresume',
+		action: this.socketPauseResumeMatch,
 	},
 ];
 

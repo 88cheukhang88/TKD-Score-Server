@@ -37,7 +37,6 @@ app.set('loglevel', process.env.TKD_LOGLEVEL || app.get('loglevel'));
 log.transports.console.level = app.get('loglevel');
 
 
-
 var bodyParser = require('body-parser');
 app.use(bodyParser());
 
@@ -149,9 +148,9 @@ validator.hookMsg(
 /* Load Controllers										*/
 /********************************************************/
 
-Utils.loadController(app, require(__dirname + '/api/Hello/HelloCtrl.js'));
-Utils.loadController(app, require(__dirname + '/api/Logger/LoggerCtrl.js'));
-Utils.loadController(app, require(__dirname + '/api/Match/MatchCtrl.js'));
+Utils.loadController(app, io, require(__dirname + '/api/Hello/HelloCtrl.js'));
+Utils.loadController(app, io, require(__dirname + '/api/Logger/LoggerCtrl.js'));
+Utils.loadController(app, io, require(__dirname + '/api/Match/MatchCtrl.js'));
 
 
 
@@ -252,14 +251,15 @@ mongoose.connection.once('open', function(){
 // Needs major refactoring into a more MVC structure
 // Need a way to test!
 /////////////////////////
-
 io.on('connection', function (socket) {
     console.log('A socket connected with id:' + socket.id);
 
     socket.on('disconnect', function(){
 	    console.log('socket with id:' + socket.id + ' disconnected');
 	});
+});
 
+io.on('connection', function (socket) {
     // join
     // Which match to listen to
 	var currentMatchId = 0;

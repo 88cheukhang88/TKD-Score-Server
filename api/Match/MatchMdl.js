@@ -1,5 +1,5 @@
 
-
+var log = require('../../lib/logger.js');
 var mongoose = require('mongoose');
 var mongules = require('mongules');
 var timestamps = require('mongoose-timestamp');
@@ -51,9 +51,9 @@ var Schema = new mongoose.Schema({
 		default: 120000,
 	},
 
-	roundTimeMS: {
-		type: Number,
-		default: 120000,
+	roundTime: {
+		type: mongoose.Schema.Types.Mixed,
+		default: {ms: 120000, clock: '02:00'},
 	},
 
 	breakLengthMS: {
@@ -61,21 +61,16 @@ var Schema = new mongoose.Schema({
 		default: 60000,
 	},
 
-	breakTimeMS: {
-		type: Number,
-		default: 60000,
+	breakTime: {
+		type: mongoose.Schema.Types.Mixed,
+		default: {ms: 60000, clock: '01:00'},
 	},
 
-	pauseTime: {
-		type: Number,
-		default: 0,
-	},
 
 	matchStatus: {
 		type: String, // round, break, pending, complete, pausedround, pausedbreak 
 		default: 'pending',
 	},
-
 
 
 
@@ -100,7 +95,11 @@ Schema.statics.toString = function() {
 
 
 
-Schema.methods.pauseResumeMatch = function () {
+////////////////////////////////////////////////
+// Model Methods
+////////////////////////////////////////////////
+
+Schema.methods.pauseResume = function () {
 	if(!roundTimer[this._id]) {
 		_createTimers(this);
 	}
@@ -108,11 +107,13 @@ Schema.methods.pauseResumeMatch = function () {
 	switch(this.matchStatus) {
 		case 'round':
 			roundTimer[this._id].stop();
+			this.roundTime = {clock:roundTimer[this._id].clock, ms:roundTimer[this._id].ms};
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedround';
 			break;
 		case 'break':
-			roundTimer[this._id].stop();
+			breakTimer[this._id].stop();
+			this.breakTime = {clock:breakTimer[this._id].clock, ms:breakTimer[this._id].ms};
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedbreak';
 			break;
@@ -129,6 +130,7 @@ Schema.methods.pauseResumeMatch = function () {
 			break;
 	}
 	this.save();
+	log.debug('Pause resume match: ' + this._id + '. Status now: ' + this.matchStatus);
 	return this.matchStatus;
 };	
 
@@ -146,6 +148,21 @@ Schema.methods.getBreakTimer = function () {
 Schema.methods.getPauseWatch = function () {
 	if(!pauseWatch[this._id]) {_createTimers(this);}
 	return pauseWatch[this._id];
+};
+
+
+
+/////////////////////////////////////
+// Collection Methods
+/////////////////////////////////////
+Schema.statics.pauseResumeMatch = function(id, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.pauseResume();
+		cb(null, match);
+	});
 };
 
 
@@ -175,8 +192,50 @@ var pauseWatch = [];
 
 
 var _createTimers = function _createTimers(match) {
-	roundTimer[match._id] = new Stopwatch(match.roundTimeMS);
-	breakTimer[match._id] = new Stopwatch(match.breakTimeMS);
+	if(roundTimer[match._id]) {return;}
+	
+	roundTimer[match._id] = new Stopwatch(match.roundTime.ms);
+	breakTimer[match._id] = new Stopwatch(match.breakTime.ms);
 	pauseWatch[match._id] = new Stopwatch();
+
+
+	////////////////////
+	// Timer automation
+	////////////////////
+	roundTimer[match._id].on('done', function() {
+		if(match.round < match.numberOfRounds) {
+			// break
+			breakTimer[match._id].reset();
+			breakTimer[match._id].start();
+			match.matchStatus = 'break';
+			match.round++;
+			match.save();
+		} 
+		else if (match.round === match.numberOfRounds && match.player1Points === match.player2Points) {
+			// sudden death
+			match.player1Points = 0;
+			match.player2Points = 0;
+			breakTimer[match._id].reset();
+			breakTimer[match._id].start();
+			match.matchStatus = 'break';
+			match.round++;
+			match.save();
+		}
+		else if (match.round === match.numberOfRounds && match.player1Points !== match.player2Points) {
+			// End of match
+			match.matchStatus = 'complete';
+			match.save();
+		}
+	});
+
+	breakTimer[match._id].on('done', function() {
+		if(match.round <= match.numberOfRounds) {
+			// Pause round clock waiting for operator input
+			pauseWatch[match._id].start();
+			match.matchStatus = 'pausedround';
+			match.save();
+		} 
+	});
+
 };
 
