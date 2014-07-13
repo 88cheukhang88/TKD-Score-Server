@@ -17,18 +17,42 @@ require(__dirname + '/../blueprints/rest_crud.js')(this);
 ///////////////////////////////////////////////////////////////
 
 
-this.pauseResumeMatch = function (req, res, next) {
-	var id = req.params.id;
-	Collection.pauseResumeMatch(id, function(err, match) {	
-		if(err) {return next(err);}
-		if(!match) {return res.notFound('Could not find match');} 		
-		res.ok(match);
+
+this.pauseResumeMatch = function(data) {
+	var id = data.id;
+	Collection.pauseResumeMatch(id, function(err, match) {
+		if(err) {return log.error(err);}
 	});
 };
 
-this.socketPauseResumeMatch = function(data) {
+this.points = function(data) {
 	var id = data.id;
-	Collection.pauseResumeMatch(id, function(err, match) {
+	var player = data.player;
+	var points = data.points;
+	Collection.points(id, player, points, function(err, match) {
+		if(err) {return log.error(err);}
+	});
+};
+
+this.penalties = function(data) {
+	var id = data.id;
+	var player = data.player;
+	var points = data.points;
+	Collection.penalties(id, player, points, function(err, match) {
+		if(err) {return log.error(err);}
+	});
+};
+
+this.resetTimer = function(data) {
+	var id = data.id;
+	Collection.resetTimer(id, function(err, match) {
+		if(err) {return log.error(err);}
+	});
+};
+
+this.resetMatch = function(data) {
+	var id = data.id;
+	Collection.resetMatch(id, function(err, match) {
 		if(err) {return log.error(err);}
 	});
 };
@@ -39,30 +63,31 @@ this.socketPauseResumeMatch = function(data) {
 
 
 
-
 // override blueprint
 this.findId = function findId(req, res, next) {
 
+	// Perhaps should move io sending to Model - not technically correct though.
+	// Could also send updates via socket when db updated from model!
 
 	Collection.findById(req.params.id, function(err, match) {
 		if(err) {return next(err);}
 		if(!match) {return res.notFound('Could not find item');}
 
-		match.getRoundTimer().on('time', function sendTime(time) {
+		match.getRoundTimer().on('time', function (time) {
 	    	io.in(match._id + "").emit('roundtime', time);
 	    });
-	    match.getRoundTimer().on('done', function sendTime(time) {
+	    match.getRoundTimer().on('done', function () {
 	    	io.in(match._id + "").emit('done');
 	    });
 
-	    match.getBreakTimer().on('time', function sendTime() {
+	    match.getBreakTimer().on('time', function (time) {
 	    	io.in(match._id + "").emit('breaktime', time);
 	    });
-	    match.getBreakTimer().on('almostdone', function sendTime() {
+	    match.getBreakTimer().on('almostdone', function () {
 	    	io.in(match._id + "").emit('almostdone');
 	    });
 
-	    match.getPauseWatch().on('time', function sendTime(time) {
+	    match.getPauseWatch().on('time', function (time) {
 	    	io.in(match._id + "").emit('pausetime', time);
 	    });
 		res.ok(match);
@@ -124,17 +149,37 @@ this.routes = [
 
 	
 	/// match commands
+	
 	{
-		method: 'get',
-		url: this.routePrefix + '/:id/pauseresume',
+		method: 'socket',
+		event: 'pauseresume',
 		action: this.pauseResumeMatch,
 	},
 	{
 		method: 'socket',
-		event: 'pauseresume',
-		action: this.socketPauseResumeMatch,
+		event: 'points',
+		action: this.points,
 	},
+	{
+		method: 'socket',
+		event: 'penalties',
+		action: this.penalties,
+	},
+	{
+		method: 'socket',
+		event: 'resetTimer',
+		action: this.resetTimer,
+	},
+	{
+		method: 'socket',
+		event: 'resetMatch',
+		action: this.resetMatch,
+	}
 ];
 
 
 module.exports = this;
+
+
+
+

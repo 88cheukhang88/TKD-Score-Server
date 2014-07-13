@@ -26,12 +26,12 @@ var Schema = new mongoose.Schema({
 		default: 0,
 	},
 
-	player1Penalies: {
+	player1Penalties: {
 		type: Number,
 		default: 0,
 	},
 
-	player2Penalies: {
+	player2Penalties: {
 		type: Number,
 		default: 0,
 	},
@@ -51,9 +51,9 @@ var Schema = new mongoose.Schema({
 		default: 120000,
 	},
 
-	roundTime: {
-		type: mongoose.Schema.Types.Mixed,
-		default: {ms: 120000, clock: '02:00'},
+	roundTimeMS: {
+		type: Number,
+		default: 120000,
 	},
 
 	breakLengthMS: {
@@ -61,9 +61,9 @@ var Schema = new mongoose.Schema({
 		default: 60000,
 	},
 
-	breakTime: {
-		type: mongoose.Schema.Types.Mixed,
-		default: {ms: 60000, clock: '01:00'},
+	breakTimeMS: {
+		type: Number,
+		default: 60000,
 	},
 
 
@@ -83,6 +83,13 @@ Schema.plugin(mongules.validate);
 
 
 
+////// TODO: Need to write 'pre' function to send model updates over socket.io ///////
+Schema.post('save', function(next) {
+	if(io) {
+		io.in(this._id).emit('match', this.toJSON());
+	}
+});
+
 
 
 Schema.methods.toString = function() {
@@ -100,9 +107,7 @@ Schema.statics.toString = function() {
 ////////////////////////////////////////////////
 
 Schema.methods.pauseResume = function () {
-	if(!roundTimer[this._id]) {
-		_createTimers(this);
-	}
+	_createTimers(this);
 
 	switch(this.matchStatus) {
 		case 'round':
@@ -119,12 +124,12 @@ Schema.methods.pauseResume = function () {
 			break;
 		case 'pausedround':
 		case 'pending':
-			pauseWatch[this._id].stop();
+			pauseWatch[this._id].reset();
 			roundTimer[this._id].start();
 			this.matchStatus = 'round';
 			break;
 		case 'pausedbreak':
-			pauseWatch[this._id].stop();
+			pauseWatch[this._id].reset();
 			breakTimer[this._id].start();
 			this.matchStatus = 'break';
 			break;
@@ -134,21 +139,110 @@ Schema.methods.pauseResume = function () {
 	return this.matchStatus;
 };	
 
+Schema.methods.points = function (player, points) {
+	var playerPoints = 0;
+	var playerPenalties = 0;
+
+	if(player === 1) {
+		playerPoints = this.player1Points;
+		playerPenalties = this.player1Penalties;
+	} else {
+		playerPoints = this.player2Points;
+		playerPenalties = this.player2Penalties;
+	}
+
+	playerPoints += points;
+	if (playerPoints < 0) {playerPoints = 0;}
+
+
+
+	if(player === 1) {
+		this.player1Points = playerPoints;
+		this.player1Penalies = playerPenalties;
+	} else {
+		this.player2Points = playerPoints;
+		this.player2Penalies = playerPenalties;
+	}
+	this.save();
+};
+
+Schema.methods.penalties = function (player, points) {
+	var playerPoints = 0;
+	var playerPenalties = 0;
+	if(player === 1) {
+		playerPoints = this.player1Points;
+		playerPenalties = this.player1Penalties;
+	} else {
+		playerPoints = this.player2Points;
+		playerPenalties = this.player2Penalties;
+	}
+
+
+	playerPenalties += points;
+	if (playerPenalties < 0) {playerPenalties = 0;}
+	if (playerPenalties > 8) {playerPenalties = 8;}
+
+
+	if(player === 1) {
+		this.player1Points = playerPoints;
+		this.player1Penalties = playerPenalties;
+	} else {
+		this.player2Points = playerPoints;
+		this.player2Penalties = playerPenalties;
+	}
+	this.save();
+};
+
+Schema.methods.resetMatch = function () {
+	_createTimers(this);
+
+	roundTimer[this._id].reset(this.roundLengthMS);
+	this.roundTimeMS = this.roundLengthMS;
+	breakTimer[this._id].reset(this.breakLengthMS);
+	this.breakTimeMS = this.breakLengthMS;
+	pauseWatch[this._id].reset();
+	this.round = this.numberOfRounds;
+	this.player1Points = 0;
+	this.player2Points = 0;
+	this.player1Penalies = 0;
+	this.player2Penalies = 0;
+	this.matchStatus = 'pending';
+	this.save();
+};
+
+Schema.methods.resetTimer = function () {
+	_createTimers(this);
+	switch(this.matchStatus) {
+		case 'round':
+		case 'pausedround':
+			roundTimer[this._id].reset();
+			pauseWatch[this._id].start();
+			break;
+		case 'break':
+		case 'pausedbreak':
+			breakTimer[this._id].reset();
+			pauseWatch[this._id].start();
+			break;
+	}
+};
+
 
 Schema.methods.getRoundTimer = function () {
-	if(!roundTimer[this._id]) {_createTimers(this);}
+	_createTimers(this);
 	return roundTimer[this._id];
 };
 
 Schema.methods.getBreakTimer = function () {
-	if(!breakTimer[this._id]) {_createTimers(this);}
+	_createTimers(this);
 	return breakTimer[this._id];
 };
 
 Schema.methods.getPauseWatch = function () {
-	if(!pauseWatch[this._id]) {_createTimers(this);}
+	_createTimers(this);
 	return pauseWatch[this._id];
 };
+
+
 
 
 
@@ -161,6 +255,46 @@ Schema.statics.pauseResumeMatch = function(id, cb) {
 		if(!match) {return cb(null, null);}
 
 		match.pauseResume();
+		cb(null, match);
+	});
+};
+
+Schema.statics.resetMatch = function(id, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.resetMatch();
+		cb(null, match);
+	});
+};
+
+Schema.statics.resetTimer = function(id, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.resetTimer();
+		cb(null, match);
+	});
+};
+
+Schema.statics.points = function(id, player, points, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.points(player, points);
+		cb(null, match);
+	});
+};
+
+Schema.statics.penalties = function(id, player, points, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.penalties(player, points);
 		cb(null, match);
 	});
 };
@@ -193,10 +327,18 @@ var pauseWatch = [];
 
 var _createTimers = function _createTimers(match) {
 	if(roundTimer[match._id]) {return;}
-	
-	roundTimer[match._id] = new Stopwatch(match.roundTime.ms);
-	breakTimer[match._id] = new Stopwatch(match.breakTime.ms);
+
+	roundTimer[match._id] = new Stopwatch(match.roundLengthMS);
+	roundTimer[match._id].ms = match.roundTimeMS;
+	breakTimer[match._id] = new Stopwatch(match.breakLengthMS);
+	breakTimer[match._id].ms = match.breakTimeMS;
 	pauseWatch[match._id] = new Stopwatch();
+
+
+
+
+
+
 
 
 	////////////////////
@@ -205,7 +347,7 @@ var _createTimers = function _createTimers(match) {
 	roundTimer[match._id].on('done', function() {
 		if(match.round < match.numberOfRounds) {
 			// break
-			breakTimer[match._id].reset();
+			roundTimer[match._id].reset();
 			breakTimer[match._id].start();
 			match.matchStatus = 'break';
 			match.round++;
@@ -236,6 +378,5 @@ var _createTimers = function _createTimers(match) {
 			match.save();
 		} 
 	});
-
 };
 

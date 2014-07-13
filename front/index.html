@@ -1,0 +1,158 @@
+<html>
+<head>
+<script src="socket.io.js"></script>
+<script src="jquery.js"></script>
+<script>
+var socket = {};
+function init() {
+	socket = io.connect();
+
+	socket.on('roundtime', function(time){
+    	$('#clock').html(formattime(time.ms, true) + '  ' + time.ms);
+    	$('#pauseclock').html(formattime(0) + '  ' + 0);
+  	});
+  	socket.on('breaktime', function(time){
+    	$('#breakclock').html(formattime(time.ms, true) + '  ' + time.ms);
+    	$('#pauseclock').html(formattime(0) + '  ' + 0);
+  	});
+  	socket.on('pausetime', function(time){
+    	$('#pauseclock').html(formattime(time.ms) + '  ' + time.ms);
+  	});
+
+    socket.on('match', function(match) {
+      $('#round').html('Round: ' + match.round);
+      $('#player1').html('Hong<br>S: ' + match.player1Points + '<br>P: ' + match.player1Penalties);
+      $('#player2').html('Chong<br>S: ' + match.player2Points + '<br>P: ' + match.player2Penalties);
+
+    })
+
+	printMatchList();
+};
+
+function printMatchList() {
+	var jqxhr = $.ajax( "api/match" )
+  	.done(function(data) {
+  		var html = '';
+    	for(var i in data) {
+    		html += '<button onclick="getMatch(\'' + data[i]._id + '\')">Match ' + data[i]._id + '</button>'
+    	}
+    	$('#matchlist').html(html);
+  	})
+  	.fail(function() {
+    	alert( "error" );
+  	})
+}
+
+function createMatch() {
+	var jqxhr = $.post( "api/match" )
+  	.done(function(data) {
+  		printMatchList();
+  	})
+  	.fail(function() {
+    	alert( "error" );
+  	})
+}
+
+function getMatch(id) {
+	
+	var jqxhr = $.ajax( "api/match/" + id)
+  	.done(function(data) {
+  		matchId = id;
+  		socket.emit('join', {id:id});
+  		$('#clock').html(formattime(data.roundTimeMS, true) + '  ' + data.roundTimeMS);
+  		$('#breakclock').html(formattime(data.breakTimeMS, true) + '  ' + data.breakTimeMS);
+  		$('#pauseclock').html(formattime(0) + ' ' + 0);
+  	})
+  	.fail(function() {
+    	alert( "error" );
+  	})
+};
+
+
+
+function pauseResume() {
+	socket.emit('pauseresume', {id:matchId});
+}
+
+function score(player, points) {
+  socket.emit('points', {id:matchId, player:player, points:points});
+}
+
+function penalty(player, points) {
+  socket.emit('penalties', {id:matchId, player:player, points:points});
+}
+
+var formattime = function(rawtime, isCountDown) {
+    var adjustedTime = rawtime;
+
+    // when counting down need to add time on the display so that timers will appear to stop SMACK ON 00:00
+    if(isCountDown) { 
+      adjustedTime = rawtime + 999; 
+    }
+
+    var ds = Math.round(adjustedTime/100) + '';
+    var sec = Math.floor(adjustedTime/1000);
+    var min = Math.floor(adjustedTime/60000);
+    ds = ds.charAt(ds.length - 1);
+
+    if(min >= 60) {
+      startstop();
+    }
+    sec = sec - 60 * min + '';
+
+    if(sec.charAt(sec.length - 2) !== '') {
+      sec = sec.charAt(sec.length - 2) + sec.charAt(sec.length - 1);
+    } else {
+      sec = 0 + sec.charAt(sec.length - 1);
+    } 
+    min = min + '';
+
+    if(min.charAt(min.length - 2) !== '')
+    {
+      min = min.charAt(min.length - 2)+min.charAt(min.length - 1);
+    } else {
+      min = 0 + min.charAt(min.length - 1);
+    }
+    //return min + ':' + sec + ':' + ds;
+    return min + ':' + sec;
+  }
+
+</script>
+</head>
+<body onload="init()">
+<div id="clock">
+
+</div>
+<div id="breakclock">
+
+</div>
+<div id="pauseclock">
+
+</div>
+
+<div id="matchlist">
+
+</div>
+
+<button onclick="pauseResume()">Pause / Resume</button>
+<button onclick="createMatch()">New Match</button>
+<div id="round">
+
+</div>
+<div>
+<button onclick="score(1,1)">Score +</button><button onclick="score(1,-1)">Score -</button>
+</div>
+<div>
+<button onclick="penalty(1,1)">Penalty +</button><button onclick="penalty(1,-1)">Penalty -</button>
+</div>
+<div id="player1"></div>
+
+<div>
+<button onclick="score(2,1)">Score +</button><button onclick="score(2,-1)">Score -</button>
+</div>
+<div>
+<button onclick="penalty(2,1)">Penalty +</button><button onclick="penalty(2,-1)">Penalty -</button>
+</div>
+<div id="player2"></div>
+</body>
+</html>

@@ -26,8 +26,6 @@ module.exports = function(grunt) {
 
 		mochaTest: {
 	      	
-
-
 	      	unit: {
 	        	options: {
 	          		reporter: 'spec'
@@ -41,7 +39,14 @@ module.exports = function(grunt) {
 	          		slow: 200,
 	        	},
 	        	src: ['test/integration/*spec.js']
-	      	}
+	      	},
+
+	      	all: {
+	        	options: {
+	          		reporter: 'spec'
+	        	},
+	        	src: ['test/unit/*spec.js', 'test/integration/*spec.js']
+	      	},
 	    },
 
 
@@ -53,7 +58,7 @@ module.exports = function(grunt) {
 			testall: {
 				files: ['*.js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js', 'test/integration/*js'],
 				//tasks: ['jshint:all', 'mochaTest:unit', 'startMongo', 'wait:giveMongoSomeTimeToLoad', 'force:on','mochaTest:integration', 'force:restore', 'stopMongo'],
-				tasks: ['jshint:all', 'mochaTest:unit' ,'mochaTest:integration'],
+				tasks: ['jshint:all', 'mochaTest:all'],
 				options: {
 					// spawn: false,
 				},
@@ -123,7 +128,7 @@ module.exports = function(grunt) {
 	    } else {
 		    grunt.task.run([
 		        'jshint:all',
-		        'mochaTest'
+		        'mochaTest:all'
 		    ]);
 	    }
 	});

@@ -82,5 +82,6 @@ Integration tests require a mongodb server to running
 License
 ======
 MIT License
+
 Copyright 2014 Mick Crozier
 

@@ -303,24 +303,6 @@ describe('Match Route', function() {
 describe('Match Route Commands', function() {
 	beforeEach(insertTestData);
 	afterEach(emptyTestData);
-	it('GET /match/:id/pauseresume should start the match', function(done) {
-		
-		var checkBody = function(res) {
-			var data = res;
-			if(data.statusCode !== 200) {
-				return 'Does not respond with correct status code: got ' + data.statusCode + ' ' + JSON.stringify(data.body);
-			}
-
-			if(data.body.matchStatus !== 'round') {
-				return 'Does not respond as expected: ' + JSON.stringify(data.body);
-			}
-		};
-
-		request(app)
-			.get(app.get('API_ROUTE_PREFIX') + '/match/' + testMatch._id + '/pauseresume')
-			.set('Accept', 'application/json')
-			.expect(checkBody)
-			.end(done);
-	});
+	
 });
 
