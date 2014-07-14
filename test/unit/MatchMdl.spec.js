@@ -56,4 +56,6 @@ describe('Match Model', function() {
 		expect(match.player2Penalties).to.equal(1);
 		done();
 	});
+
+
 });

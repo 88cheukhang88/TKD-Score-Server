@@ -104,6 +104,38 @@ describe('Match timers and clocks', function() {
 });
 
 
+describe('Match Scoring', function() {
+	beforeEach(insertTestData);
+	afterEach(emptyTestData);
+
+	it('should correctly assess 2 judge scoring', function(done) {
+		var match = testMatch;
+
+		match.registerScore({
+			source:'10101',
+			player:1,
+			points:2,
+		});
+		setTimeout(function() {
+			expect(match.player1Points).to.equal(0);
+		}, 200);
+
+		setTimeout(function() {
+			match.registerScore({
+				source:'10102',
+				player:1,
+				points:2,
+			});
+		}, 500);
+
+		setTimeout(function() {
+			expect(match.player1Points).to.equal(2);
+			done();
+		}, 1100);
+	});
+});
+
+
 
 
 

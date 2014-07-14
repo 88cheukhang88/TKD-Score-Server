@@ -57,6 +57,19 @@ this.resetMatch = function(data) {
 	});
 };
 
+this.soundHorn = function(data) {
+	if(io) {
+		io.in(data.id).emit('soundhorn');
+	}
+};
+
+this.registerScore = function(data) {
+	var id = data.id;
+	Collection.registerScore(id, data, function(err, match) {
+		if(err) {return log.error(err);}
+	});
+};
+
 
 
 
@@ -73,23 +86,7 @@ this.findId = function findId(req, res, next) {
 		if(err) {return next(err);}
 		if(!match) {return res.notFound('Could not find item');}
 
-		match.getRoundTimer().on('time', function (time) {
-	    	io.in(match._id + "").emit('roundtime', time);
-	    });
-	    match.getRoundTimer().on('done', function () {
-	    	io.in(match._id + "").emit('done');
-	    });
-
-	    match.getBreakTimer().on('time', function (time) {
-	    	io.in(match._id + "").emit('breaktime', time);
-	    });
-	    match.getBreakTimer().on('almostdone', function () {
-	    	io.in(match._id + "").emit('almostdone');
-	    });
-
-	    match.getPauseWatch().on('time', function (time) {
-	    	io.in(match._id + "").emit('pausetime', time);
-	    });
+		
 		res.ok(match);
 	});
 };	
@@ -174,7 +171,18 @@ this.routes = [
 		method: 'socket',
 		event: 'resetMatch',
 		action: this.resetMatch,
-	}
+	},
+	{
+		method: 'socket',
+		event: 'soundhorn',
+		action: this.soundHorn,
+	},
+	{
+		method: 'socket',
+		event: 'registerscore',
+		action: this.registerScore,
+	},
+
 ];
 
 

@@ -1,4 +1,5 @@
 
+
 var log = require('../../lib/logger.js');
 var mongoose = require('mongoose');
 var mongules = require('mongules');
@@ -10,10 +11,12 @@ var Schema = new mongoose.Schema({
 
 	player1: {
 		type: String,
+		default: 'Hong'
 	},
  
 	player2: {
 		type: String,
+		default: 'Chong'
 	},
 
 	player1Points: {
@@ -66,15 +69,20 @@ var Schema = new mongoose.Schema({
 		default: 60000,
 	},
 
-
 	matchStatus: {
 		type: String, // round, break, pending, complete, pausedround, pausedbreak 
 		default: 'pending',
 	},
 
+	agree: {
+		type: Number,
+		default: 2,
+	},
 
-
-
+	scoreTimeout: {
+		type: Number,
+		default: 1000,
+	},
 
 });
 Schema.plugin(timestamps);
@@ -83,7 +91,9 @@ Schema.plugin(mongules.validate);
 
 
 
-////// TODO: Need to write 'pre' function to send model updates over socket.io ///////
+//////////////////////////////////////////////////////
+// Send entire Match data over socket when it changes
+//////////////////////////////////////////////////////
 Schema.post('save', function(next) {
 	if(io) {
 		io.in(this._id).emit('match', this.toJSON());
@@ -92,19 +102,14 @@ Schema.post('save', function(next) {
 
 
 
-Schema.methods.toString = function() {
-	return '[match] ' + this.player1 + ' vs. ' + this.player2;
-};
-
-Schema.statics.toString = function() {
-	return "[model " + SchemaName + "Model]";
-};
-
 
 
 ////////////////////////////////////////////////
 // Model Methods
 ////////////////////////////////////////////////
+Schema.methods.toString = function() {
+	return '[match] ' + this.player1 + ' vs. ' + this.player2;
+};
 
 Schema.methods.pauseResume = function () {
 	_createTimers(this);
@@ -242,13 +247,126 @@ Schema.methods.getPauseWatch = function () {
 	return pauseWatch[this._id];
 };
 
+Schema.methods.registerScore = function(data) {
 
+	///// Used for corner judges only
+
+	var match = this;
+
+	var player = data.player;
+	var points = data.points;
+
+	var source = data.source;
+	var aggregatePoints = 0;
+	
+	var id = match._id;
+	var scoreTimeout = match.scoreTimeout;
+	var agree = match.agree;
+
+	if(!scoreBuffer[id]) {
+		scoreBuffer[id] = [];
+	}
+
+	if(!scoreBuffer[id][player]) {
+		scoreBuffer[id][player] = [];
+	}
+
+	if(!scoreTimer[id]) {
+		scoreTimer[id] = [];
+	}
+
+
+
+
+	if(scoreBuffer[id][player].length === 0) { // no score is present (the timer will not be running)
+		
+		/// Set the timer to add the score and clear the score buffer
+		scoreTimer[id][player] = setTimeout(function(){
+			
+			if(scoreBuffer[id][player].length >= agree) { //if enough judges have scored **** THIS IS NOT THE END - JUDGES MAY STILL VOTE, IT JUST GETS REPROCESSED UNTIL THE TIMER RUNS OUT
+				var high = 0;
+				var low = 4;
+				var scoreCount = [0,0,0,0,0];
+
+				for(var i=0;i<scoreBuffer[id][player].length;i++) {
+					///// compare scores in buffer - set the lowest and hifgest scores given
+					
+					low = Math.min(scoreBuffer[id][player][i].points,low);
+					high = Math.max(scoreBuffer[id][player][i].points,high);
+					
+					//// how votes for each score (1-4)
+					var val = scoreBuffer[id][player][i].points;
+					scoreCount[val] += 1;
+					
+				}
+				/// Set the score to be awarded as the lowest value given (just in case they don't all agree - but enough have voted at least 1 point
+				aggregatePoints = low;
+				
+				// Check the score count - if a score has enough votes set it as the score to be awarded
+				for(i=1; i<5; i++) { // must iterate through all to get the highest score (except 0) 
+					
+					if(scoreCount[i] >= agree) {
+						aggregatePoints = i;
+					}
+				}
+			}
+
+			match.points(player, aggregatePoints);
+
+			console.log(player + ' awarded ' + aggregatePoints + ' points');
+			scoreBuffer[id][player] = [];
+		}, scoreTimeout);
+	}
+
+
+
+
+
+
+
+
+	// Push the score into the vote buffer
+	if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
+		scoreBuffer[id][player].push({points:points, source:source});
+		log.info(source + ' voted player' + player + ' ' + points + ' points');
+	} else {
+		//Check if the source already exist in array? if not, add the data
+		var alreadyGotIt = false;
+		for(var i=0;i<scoreBuffer[id][player].length;i++) {
+			if(scoreBuffer[id][player][i].source === source) {
+				alreadyGotIt = true;
+				break;
+			}
+			
+		}
+		// if the judge has not already cast a vote - add this judges score to the buffer
+		if(!alreadyGotIt) {
+			scoreBuffer[id][player].push({points:points, source:source}); 
+		 	log.info(source + ' voted player' + player + ' ' + points + ' points');
+		}
+	}
+	
+
+
+	if(io) {
+		io.in(id).emit('judge', {source:source, player:player, points:points});
+	}
+
+
+	
+
+};
 
 
 
 /////////////////////////////////////
 // Collection Methods
 /////////////////////////////////////
+Schema.statics.toString = function() {
+	return "[model " + SchemaName + "Model]";
+};
+
+
 Schema.statics.pauseResumeMatch = function(id, cb) {
 	this.model(SchemaName).findById(id, function(err, match) {
 		if(err) {return cb(err);}
@@ -299,16 +417,20 @@ Schema.statics.penalties = function(id, player, points, cb) {
 	});
 };
 
+Schema.statics.registerScore = function(id, data, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.registerScore(data);
+		cb(null, match);
+	});
+};
 
 
-// hmmmm perhaps not the best design - but allows the model to loaded using require at any time
-try {
-	var Model = mongoose.model(SchemaName); // Call to return the model from mongoose
-} catch (e) {
-	var Model = mongoose.model(SchemaName, Schema); // Call to CREATE the model in mongoose
-}
 
-module.exports = Model;
+
+
 
 
 
@@ -328,22 +450,37 @@ var pauseWatch = [];
 var _createTimers = function _createTimers(match) {
 	if(roundTimer[match._id]) {return;}
 
+
 	roundTimer[match._id] = new Stopwatch(match.roundLengthMS);
 	roundTimer[match._id].ms = match.roundTimeMS;
 	breakTimer[match._id] = new Stopwatch(match.breakLengthMS);
 	breakTimer[match._id].ms = match.breakTimeMS;
 	pauseWatch[match._id] = new Stopwatch();
 
+	if(io) {
+		roundTimer[match._id].on('time', function (time) {
+	    	io.in(match._id + "").emit('roundtime', time);
+	    });
+
+	    roundTimer[match._id].on('done', function () {
+	    	io.in(match._id + "").emit('soundhorn');
+	    });
+
+	    breakTimer[match._id].on('time', function (time) {
+	    	io.in(match._id + "").emit('breaktime', time);
+	    });
+
+	    breakTimer[match._id].on('almostdone', function () {
+	    	io.in(match._id + "").emit('soundhorn');
+	    });
+
+	    pauseWatch[match._id].on('time', function (time) {
+	    	io.in(match._id + "").emit('pausetime', time);
+	    });
+	}
 
 
-
-
-
-
-
-	////////////////////
-	// Timer automation
-	////////////////////
+	// Timer automation //
 	roundTimer[match._id].on('done', function() {
 		if(match.round < match.numberOfRounds) {
 			// break
@@ -379,4 +516,27 @@ var _createTimers = function _createTimers(match) {
 		} 
 	});
 };
+
+
+//////////////////////////////////////////
+//// Remote Score Managment
+//////////////////////////////////////////
+
+
+var scoreBuffer = [];
+var scoreTimer = [];
+
+
+
+
+
+var Model = {};
+// hmmmm perhaps not the best design - but allows the model to loaded using require at any time
+try {
+	Model = mongoose.model(SchemaName); // Call to return the model from mongoose
+} catch (e) {
+	Model = mongoose.model(SchemaName, Schema); // Call to CREATE the model in mongoose
+}
+
+module.exports = Model;
 

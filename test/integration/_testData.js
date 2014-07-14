@@ -1,5 +1,7 @@
 this.fakeMatch = {
-	player1: 'test1Player1'
+	player1: 'test1Player1',
+	agree:2,
+	
 };
 
 this.fakeMatch2 = {
