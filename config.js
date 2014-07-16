@@ -9,7 +9,7 @@ var config = module.exports = {
 
 	env: 'development',
 	port: 3000,
-	loglevel: 'debug',
+	loglevel: 'verbose',
 
 	MONGO_DEVELOPMENT_URI : 'mongodb://localhost/tkdscore',
 	MONGO_STAGING_URI : 'mongodb://localhost/tkdscore',

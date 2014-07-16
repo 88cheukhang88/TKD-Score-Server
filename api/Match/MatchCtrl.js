@@ -71,30 +71,6 @@ this.registerScore = function(data) {
 };
 
 
-
-
-
-
-
-// override blueprint
-this.findId = function findId(req, res, next) {
-
-	// Perhaps should move io sending to Model - not technically correct though.
-	// Could also send updates via socket when db updated from model!
-
-	Collection.findById(req.params.id, function(err, match) {
-		if(err) {return next(err);}
-		if(!match) {return res.notFound('Could not find item');}
-
-		
-		res.ok(match);
-	});
-};	
-
-
-
-
-
 /*********************
 this.routes = [
 	{

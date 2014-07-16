@@ -98,8 +98,16 @@ Schema.post('save', function(next) {
 	if(io) {
 		io.in(this._id).emit('match', this.toJSON());
 	}
+	
 });
 
+Schema.pre('save', function(next) {
+	if(this.matchStatus === 'pending') {
+		this.roundTimeMS = this.roundLengthMS;
+		this.breakLengthMS = this.breakLengthMS;
+	}
+	next();
+});
 
 
 
@@ -113,23 +121,30 @@ Schema.methods.toString = function() {
 
 Schema.methods.pauseResume = function () {
 	_createTimers(this);
-
+	
+	var oldStatus = this.matchStatus;
 	switch(this.matchStatus) {
 		case 'round':
 			roundTimer[this._id].stop();
-			this.roundTime = {clock:roundTimer[this._id].clock, ms:roundTimer[this._id].ms};
+			this.roundTimeMS = roundTimer[this._id].ms;
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedround';
 			break;
+			/*
 		case 'break':
 			breakTimer[this._id].stop();
-			this.breakTime = {clock:breakTimer[this._id].clock, ms:breakTimer[this._id].ms};
+			this.breakTimeMS = breakTimer[this._id].ms;
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedbreak';
 			break;
+			*/
+		case 'break': 
 		case 'pausedround':
 		case 'pending':
 			pauseWatch[this._id].reset();
+			breakTimer[this._id].reset();
+
+			
 			roundTimer[this._id].start();
 			this.matchStatus = 'round';
 			break;
@@ -139,8 +154,10 @@ Schema.methods.pauseResume = function () {
 			this.matchStatus = 'break';
 			break;
 	}
+
 	this.save();
-	log.debug('Pause resume match: ' + this._id + '. Status now: ' + this.matchStatus);
+	
+	log.verbose('Pause resume match: ' + this._id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
 	return this.matchStatus;
 };	
 
@@ -203,10 +220,22 @@ Schema.methods.resetMatch = function () {
 
 	roundTimer[this._id].reset(this.roundLengthMS);
 	this.roundTimeMS = this.roundLengthMS;
+	if(io) {
+		io.in(this.id).emit('roundtime', {ms:this.roundTimeMS});
+	}
+
 	breakTimer[this._id].reset(this.breakLengthMS);
+	
 	this.breakTimeMS = this.breakLengthMS;
+	if(io) {
+		io.in(this.id).emit('breaktime', {ms:this.breakTimeMS});
+	}
+
 	pauseWatch[this._id].reset();
-	this.round = this.numberOfRounds;
+	if(io) {
+		io.in(this.id).emit('pausetime', {ms:0});
+	}
+	this.round = 1;
 	this.player1Points = 0;
 	this.player2Points = 0;
 	this.player1Penalies = 0;
@@ -313,7 +342,8 @@ Schema.methods.registerScore = function(data) {
 
 			match.points(player, aggregatePoints);
 
-			console.log(player + ' awarded ' + aggregatePoints + ' points');
+			//console.log(player + ' awarded ' + aggregatePoints + ' points');
+
 			scoreBuffer[id][player] = [];
 		}, scoreTimeout);
 	}
@@ -322,13 +352,10 @@ Schema.methods.registerScore = function(data) {
 
 
 
-
-
-
 	// Push the score into the vote buffer
 	if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
 		scoreBuffer[id][player].push({points:points, source:source});
-		log.info(source + ' voted player' + player + ' ' + points + ' points');
+		log.verbose(source + ' voted player' + player + ' ' + points + ' points');
 	} else {
 		//Check if the source already exist in array? if not, add the data
 		var alreadyGotIt = false;
@@ -342,18 +369,13 @@ Schema.methods.registerScore = function(data) {
 		// if the judge has not already cast a vote - add this judges score to the buffer
 		if(!alreadyGotIt) {
 			scoreBuffer[id][player].push({points:points, source:source}); 
-		 	log.info(source + ' voted player' + player + ' ' + points + ' points');
+		 	log.verbose(source + ' voted player' + player + ' ' + points + ' points');
 		}
 	}
 	
-
-
 	if(io) {
 		io.in(id).emit('judge', {source:source, player:player, points:points});
 	}
-
-
-	
 
 };
 
@@ -450,7 +472,6 @@ var pauseWatch = [];
 var _createTimers = function _createTimers(match) {
 	if(roundTimer[match._id]) {return;}
 
-
 	roundTimer[match._id] = new Stopwatch(match.roundLengthMS);
 	roundTimer[match._id].ms = match.roundTimeMS;
 	breakTimer[match._id] = new Stopwatch(match.breakLengthMS);
@@ -482,38 +503,46 @@ var _createTimers = function _createTimers(match) {
 
 	// Timer automation //
 	roundTimer[match._id].on('done', function() {
+		
 		if(match.round < match.numberOfRounds) {
+			
 			// break
 			roundTimer[match._id].reset();
 			breakTimer[match._id].start();
 			match.matchStatus = 'break';
 			match.round++;
 			match.save();
+			
 		} 
-		else if (match.round === match.numberOfRounds && match.player1Points === match.player2Points) {
-			// sudden death
-			match.player1Points = 0;
-			match.player2Points = 0;
-			breakTimer[match._id].reset();
-			breakTimer[match._id].start();
-			match.matchStatus = 'break';
-			match.round++;
-			match.save();
+		else if (match.round === match.numberOfRounds) {
+			if(match.player1Points === match.player2Points) {
+				// sudden death
+				match.player1Points = 0;
+				match.player2Points = 0;
+				roundTimer[match._id].reset();
+				breakTimer[match._id].start();
+				match.matchStatus = 'break';
+				match.round++;
+				match.save();
+			} else {
+				// End of match
+				
+				match.matchStatus = 'complete';
+				match.save();
+			}
 		}
-		else if (match.round === match.numberOfRounds && match.player1Points !== match.player2Points) {
-			// End of match
-			match.matchStatus = 'complete';
-			match.save();
-		}
-	});
+	});	
+		
 
 	breakTimer[match._id].on('done', function() {
-		if(match.round <= match.numberOfRounds) {
+		//if(match.round <= match.numberOfRounds) {
 			// Pause round clock waiting for operator input
+			
 			pauseWatch[match._id].start();
 			match.matchStatus = 'pausedround';
 			match.save();
-		} 
+			
+		//} 
 	});
 };
 

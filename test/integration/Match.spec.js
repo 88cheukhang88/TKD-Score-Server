@@ -108,30 +108,59 @@ describe('Match Scoring', function() {
 	beforeEach(insertTestData);
 	afterEach(emptyTestData);
 
-	it('should correctly assess 2 judge scoring', function(done) {
+	
+
+	///////// !!!!!!!! NEED A FEW MORE TESTS HERE !!!!!!!!! ///////////
+});
+
+describe('Match Auto Operations', function() {
+	beforeEach(insertTestData);
+	afterEach(emptyTestData);
+
+	it('should advance round, until round 3', function(done) {
 		var match = testMatch;
-
-		match.registerScore({
-			source:'10101',
-			player:1,
-			points:2,
-		});
+		match.roundLengthMS = 100;
+		match.breakLengthMS = 100;
+		match.save();
+		
 		setTimeout(function() {
-			expect(match.player1Points).to.equal(0);
-		}, 200);
-
+			match.resetMatch();
+			match.player1Points = 2; // ensure we do not go to sudden death
+			match.save();
+			match.pauseResume();
+		}, 100);
+		
 		setTimeout(function() {
-			match.registerScore({
-				source:'10102',
-				player:1,
-				points:2,
-			});
-		}, 500);
+			expect(match.round).to.equal(1);
+		}, 150); // in R1
 
 		setTimeout(function() {
-			expect(match.player1Points).to.equal(2);
+			expect(match.round).to.equal(2);
+		}, 250); // in R1 break
+
+		setTimeout(function() { // coming out of R2 break, for some reason roundTimer done is fired stright away
+			expect(match.round).to.equal(2);
+			match.pauseResume();
+			expect(match.round).to.equal(2);
+		}, 300); // end of break
+
+		setTimeout(function() {
+			expect(match.round).to.equal(2);
+		}, 350); // In R2
+
+		setTimeout(function() {
+			match.pauseResume();
+		}, 500); // end if break
+
+		setTimeout(function() {
+			expect(match.round).to.equal(3);
+		}, 550); // in R3
+
+		setTimeout(function() {
+			expect(match.round).to.equal(3);
+			expect(match.matchStatus).to.equal('complete');
 			done();
-		}, 1100);
+		}, 650); // End of Match
 	});
 });
 

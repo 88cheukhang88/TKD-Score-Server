@@ -12,6 +12,9 @@ factory = function(obj, primaryKey){
 				return next(err);
 			}
 			LoggerCollection.add(req.session.user, 'created ' + req.body);
+			if(io) {
+				io.emit('newMatch', doc);
+			}
 			res.ok(doc);
 		});
 	};
@@ -23,6 +26,9 @@ factory = function(obj, primaryKey){
 			if(err) {return next(err);}
 			if(!doc) {return res.notFound('Could not find item');} 
 			LoggerCollection.add(req.session.user, 'deleted ' + req.body);
+			if(io) {
+				io.emit('deleteMatch', doc);
+			}
 			res.ok();
 		});
 	};
@@ -75,6 +81,9 @@ factory = function(obj, primaryKey){
 			doc.save(function(err, doc) {
 				if(err) {return next(err);}
 				LoggerCollection.add(req.session.user, 'updated ' + req.body);
+				if(io) {
+					io.emit('updateMatch', doc);
+				}
 				res.ok(doc);
 			});
 			

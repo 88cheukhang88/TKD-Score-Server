@@ -26,7 +26,7 @@ _.forEach(config, function(arg, key) {
 });
 
 ///// Import externally set options
-app.set('env', process.env.TVUR_ENV || app.get('env'));
+app.set('env', process.env.TKD_ENV || app.get('env'));
 
 if( ['development', 'staging', 'testing', 'production'].indexOf(app.get('env')) === -1) {
 	throw new Error('Environment ' + app.get('env') + ' is not allowed');

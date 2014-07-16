@@ -4,8 +4,18 @@ module.exports = function(grunt) {
 
 		nodemon: {
 		  	dev: {
-		    	script: 'app.js'
+		    	script: 'app.js',
+		    	
 		  	}
+		},
+
+		'node-inspector': {
+			dev: {
+				options: {
+					'debug-port': 3000,
+					'save-live-edit': true,
+				}
+			}
 		},
 
 		jshint: {
@@ -114,9 +124,11 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-services');
 	grunt.loadNpmTasks('grunt-nodemon');
 	grunt.loadNpmTasks('grunt-concurrent');
+	grunt.loadNpmTasks('grunt-node-inspector');
 
 
 	grunt.registerTask('serve', 'Starts the server with nodemon', ['nodemon:dev']);
+	grunt.registerTask('debug', 'Starts the server using node inspector', ['node-inspector:dev']);
 
 
 	grunt.registerTask('test', 'Runs Mocha tests add --watch for continuous', function () {

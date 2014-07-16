@@ -14,20 +14,24 @@ var expect = require('expect.js');			/////////
 var sinon = require('sinon');
 
 
+io = false;
 
 describe('Match Model', function() {
 	var MatchCollection = require('../../api/Match/MatchMdl.js');
 
 		beforeEach(function() {
 			// Mock mongoose save function
-			var mongooseSave = sinon.stub(MatchCollection.prototype, 'save', function(callback) {
+			sinon.stub(MatchCollection.prototype, 'save', function(callback) {
 				if(callback) {callback();}
 			});
+
+			
 		});
 		
 		afterEach(function() {
 			// Restore mocked functions
 			MatchCollection.prototype.save.restore();
+			
 		});
 	
 
@@ -57,5 +61,89 @@ describe('Match Model', function() {
 		done();
 	});
 
+	describe('Match Scoring', function() {
 
+		it('should correctly assess 2 judge scoring 2 points (= 2 points)', function(done) {
+			var match = new MatchCollection({scoreTimeout:200});
+
+			match.registerScore({
+				source:'10101',
+				player:1,
+				points:2,
+			});
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(0);
+			}, 50);
+
+			setTimeout(function() {
+				match.registerScore({
+					source:'10102',
+					player:1,
+					points:2,
+				});
+			}, 100);
+
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(2);
+				done();
+			}, 250);
+		});
+
+		it('should correctly assess 2 judge scoring 2 points and 1 point (= 1 point)', function(done) {
+			var match = new MatchCollection({scoreTimeout:200});
+
+
+			match.registerScore({
+				source:'10101',
+				player:1,
+				points:2,
+			});
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(0);
+			}, 50);
+
+			setTimeout(function() {
+				match.registerScore({
+					source:'10102',
+					player:1,
+					points:1,
+				});
+			}, 100);
+
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(1);
+				done();
+			}, 250);
+		});
+
+		it('should correctly assess 2 judge scoring 2 points with 1 late (= 0 points)', function(done) {
+			var match = new MatchCollection({scoreTimeout:200});
+
+			match.registerScore({
+				source:'10101',
+				player:1,
+				points:2,
+			});
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(0);
+			}, 50);
+
+			setTimeout(function() {
+				match.registerScore({
+					source:'10102',
+					player:1,
+					points:1,
+				});
+			}, 250);
+
+			setTimeout(function() {
+				expect(match.player1Points).to.equal(0);
+				done();
+			}, 300);
+		});
+	});
+	///////// !!!!!!!! NEED A FEW MORE TESTS HERE !!!!!!!!! ///////////
+
+
+	
 });
