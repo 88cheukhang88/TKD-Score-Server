@@ -126,29 +126,26 @@ Schema.methods.pauseResume = function () {
 	switch(this.matchStatus) {
 		case 'round':
 			roundTimer[this._id].stop();
-			this.roundTimeMS = roundTimer[this._id].ms;
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedround';
 			break;
-			/*
+			
 		case 'break':
 			breakTimer[this._id].stop();
 			this.breakTimeMS = breakTimer[this._id].ms;
 			pauseWatch[this._id].start();
 			this.matchStatus = 'pausedbreak';
 			break;
-			*/
-		case 'break': 
+		
 		case 'pausedround':
 		case 'pending':
 			pauseWatch[this._id].reset();
 			breakTimer[this._id].reset();
-
-			
 			roundTimer[this._id].start();
 			this.matchStatus = 'round';
 			break;
 		case 'pausedbreak':
+
 			pauseWatch[this._id].reset();
 			breakTimer[this._id].start();
 			this.matchStatus = 'break';
@@ -235,6 +232,7 @@ Schema.methods.resetMatch = function () {
 	if(io) {
 		io.in(this.id).emit('pausetime', {ms:0});
 	}
+
 	this.round = 1;
 	this.player1Points = 0;
 	this.player2Points = 0;
@@ -505,12 +503,12 @@ var _createTimers = function _createTimers(match) {
 	roundTimer[match._id].on('done', function() {
 		
 		if(match.round < match.numberOfRounds) {
-			
 			// break
+			console.log('in break');
 			roundTimer[match._id].reset();
 			breakTimer[match._id].start();
 			match.matchStatus = 'break';
-			match.round++;
+			match.round = match.round + 1;
 			match.save();
 			
 		} 
@@ -522,7 +520,7 @@ var _createTimers = function _createTimers(match) {
 				roundTimer[match._id].reset();
 				breakTimer[match._id].start();
 				match.matchStatus = 'break';
-				match.round++;
+				match.round = match.round + 1;
 				match.save();
 			} else {
 				// End of match
@@ -537,7 +535,6 @@ var _createTimers = function _createTimers(match) {
 	breakTimer[match._id].on('done', function() {
 		//if(match.round <= match.numberOfRounds) {
 			// Pause round clock waiting for operator input
-			
 			pauseWatch[match._id].start();
 			match.matchStatus = 'pausedround';
 			match.save();
