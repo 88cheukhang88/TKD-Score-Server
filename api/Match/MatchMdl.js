@@ -139,6 +139,7 @@ Schema.methods.pauseResume = function () {
 		
 		case 'pausedround':
 		case 'pending':
+			breakTimer[this._id].reset();
 			pauseWatch[this._id].reset();
 			breakTimer[this._id].reset();
 			roundTimer[this._id].start();
