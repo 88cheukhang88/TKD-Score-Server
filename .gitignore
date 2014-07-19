@@ -1,6 +1,8 @@
 node_modules/
 *.log
 tmp
+.ftppass
+sftp-config.js
 
 build/
 dist/

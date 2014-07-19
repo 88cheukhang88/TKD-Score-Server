@@ -1,4 +1,14 @@
 module.exports = function(grunt) {
+
+
+	var sftpConfig = {};
+
+	try{
+		sftpConfig = require('./sftp-config.js');
+	} catch(e) {
+	};
+
+
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 
@@ -113,7 +123,21 @@ module.exports = function(grunt) {
 			options: {
                 logConcurrentOutput: true
             }
-		}
+		},
+
+		'sftp-deploy': {
+	      staging: {
+	          auth: {
+	            host: '54.206.61.99',
+	            port: 22,
+	            authKey: 'mcAWS'
+	          },
+	          src: './',
+	          dest: 'projects/TKD-Score-Server',
+	          exclusions: ['./**/.DS_Store', './Thumbs.db', './tmp', './.tmp', './test', './.git', './node_modules', './.ftppass'],
+	          server_sep: '/'
+	      }
+	    }
 
 	});
 	
@@ -125,10 +149,12 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-nodemon');
 	grunt.loadNpmTasks('grunt-concurrent');
 	grunt.loadNpmTasks('grunt-node-inspector');
+	grunt.loadNpmTasks('grunt-sftp-deploy');
 
 
 	grunt.registerTask('serve', 'Starts the server with nodemon', ['nodemon:dev']);
 	grunt.registerTask('debug', 'Starts the server using node inspector', ['node-inspector:dev']);
+	grunt.registerTask('deploy:staging', 'Deploys to staging server', ['sftp-deploy:staging']);
 
 
 	grunt.registerTask('test', 'Runs Mocha tests add --watch for continuous', function () {

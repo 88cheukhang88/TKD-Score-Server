@@ -57,8 +57,7 @@ app.use(expressSession({
 Utils.loadAllFilesIntoObj(__dirname + '/api/responses/', express.response);
 
 
-
-app.use('/', express.static(__dirname + '/front'));
+app.use('/', express.static(__dirname + '/../TKD-Score-Web/dist/'));
 
 
 
