@@ -34,6 +34,15 @@ this.points = function(data) {
 	});
 };
 
+this.changeRound = function(data) {
+	var id = data.id;
+	var value = data.value;
+	var points = data.points;
+	Collection.changeRound(id, value, function(err, match) {
+		if(err) {return log.error(err);}
+	});
+};
+
 this.penalties = function(data) {
 	var id = data.id;
 	var player = data.player;
@@ -137,6 +146,11 @@ this.routes = [
 		method: 'socket',
 		event: 'penalties',
 		action: this.penalties,
+	},
+	{
+		method: 'socket',
+		event: 'changeRound',
+		action: this.changeRound,
 	},
 	{
 		method: 'socket',

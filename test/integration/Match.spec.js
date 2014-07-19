@@ -139,28 +139,30 @@ describe('Match Auto Operations', function() {
 		}, 250); // in R1 break
 
 		setTimeout(function() { // coming out of R2 break, for some reason roundTimer done is fired stright away
+			expect(match.matchStatus).to.be('pausedround');
 			expect(match.round).to.equal(2);
 			match.pauseResume();
 			expect(match.round).to.equal(2);
-		}, 300); // end of break
+		}, 340); // end of break
 
 		setTimeout(function() {
 			expect(match.round).to.equal(2);
-		}, 350); // In R2
+		}, 380); // In R2
 
 		setTimeout(function() {
+			expect(match.matchStatus).to.be('pausedround');
 			match.pauseResume();
-		}, 500); // end if break
+		}, 550); // end if break
 
 		setTimeout(function() {
 			expect(match.round).to.equal(3);
-		}, 550); // in R3
+		}, 600); // in R3
 
 		setTimeout(function() {
 			expect(match.round).to.equal(3);
 			expect(match.matchStatus).to.equal('complete');
 			done();
-		}, 650); // End of Match
+		}, 700); // End of Match
 	});
 });
 

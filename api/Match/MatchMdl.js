@@ -186,6 +186,21 @@ Schema.methods.points = function (player, points) {
 	this.save();
 };
 
+Schema.methods.changeRound = function (round) {
+
+
+	if(round > this.numberOfRounds) {
+		round = this.numberOfRounds;
+	}
+
+	if(round < 1) {
+		round = 1;
+	}
+
+	this.round = round;
+	this.save();
+};
+
 Schema.methods.penalties = function (player, points) {
 	var playerPoints = 0;
 	var playerPenalties = 0;
@@ -428,6 +443,16 @@ Schema.statics.points = function(id, player, points, cb) {
 	});
 };
 
+Schema.statics.changeRound = function(id, value, cb) {
+	this.model(SchemaName).findById(id, function(err, match) {
+		if(err) {return cb(err);}
+		if(!match) {return cb(null, null);}
+
+		match.changeRound(value);
+		cb(null, match);
+	});
+};
+
 Schema.statics.penalties = function(id, player, points, cb) {
 	this.model(SchemaName).findById(id, function(err, match) {
 		if(err) {return cb(err);}
@@ -552,7 +577,6 @@ var _createTimers = function _createTimers(match) {
 
 var scoreBuffer = [];
 var scoreTimer = [];
-
 
 
 
