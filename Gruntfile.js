@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 	try{
 		sftpConfig = require('./sftp-config.js');
 	} catch(e) {
-	};
+	}
 
 
 	grunt.initConfig({

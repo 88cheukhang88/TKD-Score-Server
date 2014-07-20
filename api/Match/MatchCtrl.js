@@ -20,6 +20,7 @@ require(__dirname + '/../blueprints/rest_crud.js')(this);
 
 this.pauseResumeMatch = function(data) {
 	var id = data.id;
+	
 	Collection.pauseResumeMatch(id, function(err, match) {
 		if(err) {return log.error(err);}
 	});
@@ -74,6 +75,7 @@ this.soundHorn = function(data) {
 
 this.registerScore = function(data) {
 	var id = data.id;
+
 	Collection.registerScore(id, data, function(err, match) {
 		if(err) {return log.error(err);}
 	});

@@ -188,7 +188,6 @@ Schema.methods.points = function (player, points) {
 
 Schema.methods.changeRound = function (round) {
 
-
 	if(round > this.numberOfRounds) {
 		round = this.numberOfRounds;
 	}
@@ -530,7 +529,7 @@ var _createTimers = function _createTimers(match) {
 		
 		if(match.round < match.numberOfRounds) {
 			// break
-			console.log('in break');
+
 			roundTimer[match._id].reset();
 			breakTimer[match._id].start();
 			match.matchStatus = 'break';
