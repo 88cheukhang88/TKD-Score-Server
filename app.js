@@ -258,17 +258,26 @@ io.on('connection', function (socket) {
 	});
 });
 
+
+
+
 io.on('connection', function (socket) {
     // join
     // Which match to listen to
-	var currentMatchId = 0;
+	var currentMatchId = false;
 	socket.on('join', function(data) {
 		socket.leave(currentMatchId);
 		var id = data.id;
-		
 		socket.join(id);
+		socket.viewType = data.viewType;
 		currentMatchId = id;
 	});
 });
+
+
+
+
+
+
 
 

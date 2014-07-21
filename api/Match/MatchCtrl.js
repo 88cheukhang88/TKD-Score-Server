@@ -18,9 +18,9 @@ require(__dirname + '/../blueprints/rest_crud.js')(this);
 
 
 
-this.pauseResumeMatch = function(data) {
+this.pauseResumeMatch = function(data, socket) {
 	var id = data.id;
-	
+	console.log(socket.viewType);
 	Collection.pauseResumeMatch(id, function(err, match) {
 		if(err) {return log.error(err);}
 	});

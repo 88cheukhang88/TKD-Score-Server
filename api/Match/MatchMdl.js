@@ -89,12 +89,29 @@ Schema.plugin(timestamps);
 Schema.plugin(mongules.validate);
 
 
+// matchStore will hold an in memory copy of the matches. This is important for time sensitive events - such as timer done events.
+// matchStore is updated by the 'post save' moongoose event.
+// Might need a way to get data out of mongo to start with.
+// Need to extrapolate and refactor
+
+var matchStore = [];
+matchStore.save = function(match) {
+	this[match._id] = match;
+};
+matchStore.get = function(id) {
+	return this[id];
+};
+matchStore.remove = function(id) {
+	delete(this[id]);
+};
+Schema.statics.matchStore = matchStore; // declared for unit testing mock purposes
 
 
 //////////////////////////////////////////////////////
 // Send entire Match data over socket when it changes
 //////////////////////////////////////////////////////
 Schema.post('save', function(next) {
+	matchStore.save(this);
 	if(io) {
 		io.in(this._id).emit('match', this.toJSON());
 	}
@@ -130,13 +147,16 @@ Schema.methods.pauseResume = function () {
 			this.matchStatus = 'pausedround';
 			break;
 			
-		case 'break':
-			breakTimer[this._id].stop();
-			this.breakTimeMS = breakTimer[this._id].ms;
-			pauseWatch[this._id].start();
-			this.matchStatus = 'pausedbreak';
-			break;
-		
+		case 'break': // only pause break if the bell has not sounded. Otherwise start the round
+			if (breakTimer[this._id].ms > breakTimer[this._id].almostDoneMS) {
+				breakTimer[this._id].stop();
+				this.breakTimeMS = breakTimer[this._id].ms;
+				pauseWatch[this._id].start();
+				this.matchStatus = 'pausedbreak';
+				break;
+			} 	
+			/* falls through */
+		case '_endbreakearly':	// internal use to force the break to end
 		case 'pausedround':
 		case 'pending':
 			breakTimer[this._id].reset();
@@ -187,17 +207,23 @@ Schema.methods.points = function (player, points) {
 };
 
 Schema.methods.changeRound = function (round) {
+	if(this.matchStatus === "break" && breakTimer[this._id].ms > breakTimer[this._id].almostDoneMS) {
+		this.matchStatus = '_endbreakearly';
+		this.pauseResume();
+	} else {
+		if(round > this.numberOfRounds) {
+			round = this.numberOfRounds;
+		}
 
-	if(round > this.numberOfRounds) {
-		round = this.numberOfRounds;
+		if(round < 1) {
+			round = 1;
+		}
+
+		this.round = round;
+		this.save();
 	}
 
-	if(round < 1) {
-		round = 1;
-	}
-
-	this.round = round;
-	this.save();
+	
 };
 
 Schema.methods.penalties = function (player, points) {
@@ -251,8 +277,8 @@ Schema.methods.resetMatch = function () {
 	this.round = 1;
 	this.player1Points = 0;
 	this.player2Points = 0;
-	this.player1Penalies = 0;
-	this.player2Penalies = 0;
+	this.player1Penalties = 0;
+	this.player2Penalties = 0;
 	this.matchStatus = 'pending';
 	this.save();
 };
@@ -492,6 +518,8 @@ var breakTimer = [];
 var pauseWatch = [];
 
 
+
+
 var _createTimers = function _createTimers(match) {
 	if(roundTimer[match._id]) {return;}
 
@@ -525,44 +553,57 @@ var _createTimers = function _createTimers(match) {
 
 
 	// Timer automation //
-	roundTimer[match._id].on('done', function() {
-		
-		if(match.round < match.numberOfRounds) {
-			// break
 
-			roundTimer[match._id].reset();
-			breakTimer[match._id].start();
-			match.matchStatus = 'break';
-			match.round = match.round + 1;
-			match.save();
-			
+	// CAN'T WORK WITH 'MATCH' THIS WAY - it's values are from when the timers
+	// first loaded and the events are applied. 
+	// NOT the up to date data from the DB
+
+	roundTimer[match._id].on('done', function() {
+		var updatedMatch = matchStore.get(match._id); // get updated match data from memory - then HIDE the original match with a new variable in this scope
+		var oldStatus = updatedMatch.matchStatus;
+		if(updatedMatch.round < updatedMatch.numberOfRounds) {
+			// break
+			roundTimer[updatedMatch._id].reset();
+			breakTimer[updatedMatch._id].start();
+			updatedMatch.matchStatus = 'break';
+			updatedMatch.round = updatedMatch.round + 1;
+			updatedMatch.save();
+			log.verbose('Round Done: ' + updatedMatch._id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 		} 
-		else if (match.round === match.numberOfRounds) {
-			if(match.player1Points === match.player2Points) {
+		else if (updatedMatch.round === updatedMatch.numberOfRounds) {
+			if(updatedMatch.player1Points === updatedMatch.player2Points) {
 				// sudden death
-				match.player1Points = 0;
-				match.player2Points = 0;
+				updatedMatch.player1Points = 0;
+				updatedMatch.player2Points = 0;
 				roundTimer[match._id].reset();
 				breakTimer[match._id].start();
-				match.matchStatus = 'break';
-				match.round = match.round + 1;
-				match.save();
+				updatedMatch.matchStatus = 'break';
+				updatedMatch.round = match.round + 1;
+				log.verbose('Round Done - going sudden death: ' + updatedMatch._id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+				updatedMatch.save();
 			} else {
 				// End of match
-				
-				match.matchStatus = 'complete';
-				match.save();
+				log.verbose('Match Done: ' + updatedMatch._id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+				updatedMatch.matchStatus = 'complete';
+				updatedMatch.save();
 			}
+		}
+		else {
+			log.verbose('Match Done: ' + updatedMatch._id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+			updatedMatch.matchStatus = 'complete';
+			updatedMatch.save();
 		}
 	});	
 		
 
 	breakTimer[match._id].on('done', function() {
+		var updatedMatch = matchStore.get(match._id); // get updated match data from memory - then HIDE the original match with a new variable in this scope
+
 		//if(match.round <= match.numberOfRounds) {
 			// Pause round clock waiting for operator input
-			pauseWatch[match._id].start();
-			match.matchStatus = 'pausedround';
-			match.save();
+			pauseWatch[updatedMatch._id].start();
+			updatedMatch.matchStatus = 'pausedround';
+			updatedMatch.save();
 			
 		//} 
 	});
@@ -576,7 +617,6 @@ var _createTimers = function _createTimers(match) {
 
 var scoreBuffer = [];
 var scoreTimer = [];
-
 
 
 

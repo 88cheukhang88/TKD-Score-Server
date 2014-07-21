@@ -14,15 +14,23 @@ var expect = require('expect.js');			/////////
 var sinon = require('sinon');
 
 
-io = false;
+io = false; // ignore socket calls in unit tests
+
 
 describe('Match Model', function() {
 	var MatchCollection = require('../../api/Match/MatchMdl.js');
+	var match = {};
 
 		beforeEach(function() {
+			match = {};
 			// Mock mongoose save function
 			sinon.stub(MatchCollection.prototype, 'save', function(callback) {
 				if(callback) {callback();}
+			});
+
+			sinon.stub(MatchCollection.matchStore, 'get', function(id) {
+				console.log('should be winning');
+				return match;
 			});
 
 			
@@ -31,12 +39,13 @@ describe('Match Model', function() {
 		afterEach(function() {
 			// Restore mocked functions
 			MatchCollection.prototype.save.restore();
-			
+			MatchCollection.matchStore.get.restore();
 		});
 	
 
 	it('should add points to player scores', function(done) {
-		var match = new MatchCollection();
+		match = new MatchCollection();
+
 
 		expect(match.player1Points).to.equal(0);
 		match.points(1, 3);
