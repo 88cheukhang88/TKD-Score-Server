@@ -548,15 +548,17 @@ var _createTimers = function _createTimers(match) {
 
 	    pauseWatch[match._id].on('time', function (time) {
 	    	io.in(match._id + "").emit('pausetime', time);
+
+	    	if(time.ms > 120000) {
+	    		// STOP AFTER 2 MINUTES
+	    		// !!!!!!!!!!!!!!!!!!REMOVE FOR PRODUCTION!!!!!!!!!!!!!!!!!!!!!!
+	    		pauseWatch[match._id].stop();
+	    	}
 	    });
 	}
 
 
 	// Timer automation //
-
-	// CAN'T WORK WITH 'MATCH' THIS WAY - it's values are from when the timers
-	// first loaded and the events are applied. 
-	// NOT the up to date data from the DB
 
 	roundTimer[match._id].on('done', function() {
 		var updatedMatch = matchStore.get(match._id); // get updated match data from memory - then HIDE the original match with a new variable in this scope
