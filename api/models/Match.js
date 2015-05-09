@@ -70,7 +70,7 @@ module.exports = {
 			defaultsTo: 'pending',
 		},
 
-		breakTimeMS: {
+		agree: {
 			type: 'integer',
 			defaultsTo: 2,
 		},
@@ -82,10 +82,10 @@ module.exports = {
 
 		toString: function() {
 			return '[match] ' + this.player1 + ' vs. ' + this.player2;
-		};
+		},
 
 
-		pauseResume = function () {
+		pauseResume: function () {
 			MatchService.createTimers(this);
 			
 			var oldStatus = this.matchStatus;
@@ -202,19 +202,19 @@ module.exports = {
 			this.save();
 		},
 
-		resetMatch = function () {
+		resetMatch: function () {
 			MatchService.createTimers(this);
 
 			MatchService.roundTimer[this.id].reset(this.roundLengthMS);
 			this.roundTimeMS = this.roundLengthMS;
-			if(io) {
-				io.in(this.id).emit('roundtime', {ms:this.roundTimeMS});
-			}
+			
+			Match.message(this.id, {command:'roundtime', ms:this.roundTimeMS});
+			
 
 			MatchService.breakTimer[this.id].reset(this.breakLengthMS);
 			
 			this.breakTimeMS = this.breakLengthMS;
-			pauseWatch[this.id].reset();
+			MatchService.pauseWatch[this.id].reset();
 
 			/*   // we send the whole match in the this.save()
 			if(io) {
@@ -225,6 +225,7 @@ module.exports = {
 			}
 			*/
 
+
 			this.round = 1;
 			this.player1Points = 0;
 			this.player2Points = 0;
@@ -234,7 +235,7 @@ module.exports = {
 			this.save();
 		},
 
-		resetTimer = function () {
+		resetTimer: function () {
 			MatchService.createTimers(this);
 			switch(this.matchStatus) {
 				case 'round':
@@ -250,22 +251,22 @@ module.exports = {
 			}
 		},
 
-		getRoundTimer = function () {
+		getRoundTimer: function () {
 			MatchService.createTimers(this);
 			return MatchService.roundTimer[this.id];
 		},
 
-		getBreakTimer = function () {
+		getBreakTimer: function () {
 			MatchService.createTimers(this);
 			return breakTimer[this.id];
 		},
 
-		getPauseWatch = function () {
-			MatchService.createTimers(this),
+		getPauseWatch: function () {
+			MatchService.createTimers(this);
 			return pauseWatch[this.id];
 		},
 
-		registerScore = function(data) {
+		registerScore: function(data) {
 
 			///// Used for corner judges only
 
@@ -365,7 +366,7 @@ module.exports = {
 			// For judge pressed indicators
 			Match.message(this.id, {command: 'judge', source:source, player:player, points:points});
 
-		};
+		}
 	},
 
 	///////// Lifecycle Functions /////////
@@ -394,7 +395,8 @@ module.exports = {
 	afterCreate: function(record, next) {
 		// Save to memory
 		MatchService.matchStore.save(record);
-	}
+		next();
+	},
 
 	afterUpdate: function(record, next) {
 		// Save to memory
@@ -402,6 +404,7 @@ module.exports = {
 
 		// Publish the match update to all subscribed clients
 		Match.publishUpdate(record.id, record);
+		next();
 	},
 
 

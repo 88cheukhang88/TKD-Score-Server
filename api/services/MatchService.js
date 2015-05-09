@@ -7,7 +7,7 @@
 
 	var matchStore = [];
 	matchStore.save = function(match) {
-		this[match._id] = match;
+		this[match.id] = match;
 	};
 	matchStore.get = function(id) {
 		return this[id];
@@ -39,43 +39,44 @@
 		breakTimer[match.id].ms = match.breakTimeMS;
 		pauseWatch[match.id] = new Stopwatch();
 
-		if(io) {
-			roundTimer[match.id].on('time', function (time) {
-		    	//io.in(match.id + "").emit('roundtime', time);
-		    	Match.publishUpdate(match.id, match);
-		    });
 
-		    roundTimer[match.id].on('done', function () {
-		    	//io.in(match.id + "").emit('soundhorn');
-		    	Match.soundhorn(match.id);
-		    });
+		roundTimer[match.id].on('time', function (time) {
+	    	//io.in(match.id + "").emit('roundtime', time);
+	    	Match.message(match.id, {command:'roundtime', ms:time});
+	    });
 
-		    breakTimer[match.id].on('time', function (time) {
-		    	//io.in(match.id + "").emit('breaktime', time);
-		    	Match.publishUpdate(match.id, match);
-		    });
+	    roundTimer[match.id].on('done', function () {
+	    	//io.in(match.id + "").emit('soundhorn');
+	    	Match.soundhorn(match.id);
+	    });
 
-		    breakTimer[match.id].on('almostdone', function () {
-		    	//io.in(match.id + "").emit('soundhorn');
-		    	Match.soundhorn(match.id);
-		    });
+	    breakTimer[match.id].on('time', function (time) {
+	    	//io.in(match.id + "").emit('breaktime', time);
+	    	Match.message(match.id, {command:'breaktime', ms:time});
+	    });
 
-		    pauseWatch[match.id].on('time', function (time) {
-		    	//io.in(match.id + "").emit('pausetime', time);
-		    	Match.publishUpdate(match.id, match);
+	    breakTimer[match.id].on('almostdone', function () {
+	    	//io.in(match.id + "").emit('soundhorn');
+	    	Match.soundhorn(match.id);
+	    });
 
-		    	//if(time.ms > 120000) {
-		    		// STOP AFTER 2 MINUTES
-		    		// !!!!!!!!!!!!!!!!!!REMOVE FOR PRODUCTION!!!!!!!!!!!!!!!!!!!!!!
-		    	//	pauseWatch[match.id].stop();
-		    	//}
-		    });
-		}
+	    pauseWatch[match.id].on('time', function (time) {
+	    	//io.in(match.id + "").emit('pausetime', time);
+	    	Match.message(match.id, {command:'pausetime', ms:time});
+
+	    	//if(time.ms > 120000) {
+	    		// STOP AFTER 2 MINUTES
+	    		// !!!!!!!!!!!!!!!!!!REMOVE FOR PRODUCTION!!!!!!!!!!!!!!!!!!!!!!
+	    	//	pauseWatch[match.id].stop();
+	    	//}
+	    });
+		
 
 
 		// Timer automation //
 
 		roundTimer[match.id].on('done', function() {
+
 			var updatedMatch = matchStore.get(match.id); // get updated match data from memory
 			var oldStatus = updatedMatch.matchStatus;
 			if(updatedMatch.round < updatedMatch.numberOfRounds) {
@@ -84,7 +85,7 @@
 				breakTimer[updatedMatch.id].start();
 				updatedMatch.matchStatus = 'break';
 				updatedMatch.round = updatedMatch.round + 1;
-				updatedMatch.save();
+				Match.update(updatedMatch.id, updatedMatch);
 				log.verbose('Round Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 			} 
 			else if (updatedMatch.round === updatedMatch.numberOfRounds) {
@@ -97,18 +98,18 @@
 					updatedMatch.matchStatus = 'break';
 					updatedMatch.round = match.round + 1;
 					log.verbose('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
-					updatedMatch.save();
+					Match.update(updatedMatch.id, updatedMatch);
 				} else {
 					// End of match
 					log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 					updatedMatch.matchStatus = 'complete';
-					updatedMatch.save();
+					Match.update(updatedMatch.id, updatedMatch);
 				}
 			}
 			else {
 				log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 				updatedMatch.matchStatus = 'complete';
-				updatedMatch.save();
+				Match.update(updatedMatch.id, updatedMatch);
 			}
 		});	
 			
@@ -120,15 +121,14 @@
 				// Pause round clock waiting for operator input
 				pauseWatch[updatedMatch.id].start();
 				updatedMatch.matchStatus = 'pausedround';
-				updatedMatch.save();
+				Match.update(updatedMatch.id, updatedMatch);
 				
 			//} 
 		});
-	};
+	}
 
 	
 	
-
 	module.exports = {
 		matchStore: matchStore,
 		roundTimer: roundTimer,

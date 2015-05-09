@@ -16,7 +16,7 @@ module.exports = {
 		});
 	},
 
-	this.changeRound: function(req, res, next) {
+	changeRound: function(req, res, next) {
 		var id = req.param('id');
 		var value = data.value;
 		var points = data.points;
@@ -60,4 +60,4 @@ module.exports = {
 			if(err) {return log.error(err);}
 		});
 	},
-}
+};
