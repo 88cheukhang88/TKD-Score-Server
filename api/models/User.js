@@ -10,7 +10,6 @@ var bcrypt = require('bcrypt');
 
 module.exports = {
 
-
   attributes: {
 
     openID: {
@@ -34,10 +33,6 @@ module.exports = {
       required: true,
     },
 
-    roles: {
-    	collection: 'Role',
-    	via: 'users',
-    },
 
     firstName: {
     	type: 'string',
