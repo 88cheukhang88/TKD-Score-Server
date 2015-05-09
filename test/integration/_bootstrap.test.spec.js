@@ -11,19 +11,29 @@ console.log(' ');
 
 var Sails = require('sails');
 
+
 before(function beforeRunningAnyTests(done) {
 	this.timeout(20000);
 	console.log('Lifting Sails...');
 	Sails.load({
-		environment: 'testing',
+		//environment: 'testing',
+		models: {
+		    connection: 'testMysqlServer',
+		    migrate: 'drop',
+		},
 
-	}, function whenAppIsReady(err, sails) {
+	  	port: 1338,
+		log: {
+			level: "debug",
+		},
+
+	}, function whenAppIsReady(err, sailsapp) {
 		if(err) { return done(err);}
 		serverApp = sails.hooks.http.app;
-		done(err, sails);
+		sails = sailsapp;
+		done(err, sailsapp);
 	});
 });
-
 
 
 after(function afterTestsFinish(done) {
@@ -31,7 +41,6 @@ after(function afterTestsFinish(done) {
 	console.log('Lowering Sails...');
 	sails.lower(done);
 });
-
 
 
 

@@ -67,7 +67,45 @@ module.exports.routes = {
 
 
 
+    'post /api/match/controls/pauseresume': {
+        controller: "Match",
+        action: "pauseResume",
+    },
 
+    'post /api/match/controls/points': {
+        controller: "Match",
+        action: "points",
+    },
+
+    'post /api/match/controls/penalties': {
+        controller: "Match",
+        action: "penalties",
+    },
+
+    'post /api/match/controls/changeRound': {
+        controller: "Match",
+        action: "changeRound",
+    },
+
+    'post /api/match/controls/resetTimer': {
+        controller: "Match",
+        action: "resetTimer",
+    },
+
+    'post /api/match/controls/resetMatch': {
+        controller: "Match",
+        action: "resetMatch",
+    },
+
+    'post /api/match/controls/soundhorn': {
+        controller: "Match",
+        action: "soundhorn",
+    },
+
+    'post /api/match/controls/registerscore': {
+        controller: "Match",
+        action: "registerscore",
+    },
 
 
 

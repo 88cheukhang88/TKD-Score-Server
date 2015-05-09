@@ -212,7 +212,7 @@ describe('Match Auto Operations', function() {
 	testData.beforeEach();
 	testData.afterEach();
 
-	it('should advance round, until round 3', function(done) {
+	xit('should advance round, until round 3', function(done) {
 
 		var record = {
 			roundLengthMS: 100,
@@ -227,6 +227,7 @@ describe('Match Auto Operations', function() {
 				match.player1Points = 2; // ensure we do not go to sudden death
 				match.save();
 				match.pauseResume();
+				console.log('hey1');
 			}, 100);
 			
 			setTimeout(function() {
@@ -242,6 +243,7 @@ describe('Match Auto Operations', function() {
 				expect(match.round).to.equal(2);
 				match.pauseResume();
 				expect(match.round).to.equal(2);
+				console.log('hey2');
 			}, 340); // end of break
 
 			setTimeout(function() {
@@ -251,6 +253,7 @@ describe('Match Auto Operations', function() {
 			setTimeout(function() {
 				expect(match.matchStatus).to.be('pausedround');
 				match.pauseResume();
+				console.log('hey3');
 			}, 550); // end if break
 
 			setTimeout(function() {

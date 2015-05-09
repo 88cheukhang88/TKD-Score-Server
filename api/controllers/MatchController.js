@@ -1,5 +1,5 @@
 module.exports = {
-	pauseResumeMatch: function(req, res, next) {
+	pauseResume: function(req, res, next) {
 		var id = req.param('id');
 		
 		Match.pauseResumeMatch(id, function(err, match) {

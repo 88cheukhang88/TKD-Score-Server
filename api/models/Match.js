@@ -85,6 +85,7 @@ module.exports = {
 		},
 
 
+
 		pauseResume: function () {
 			MatchService.createTimers(this);
 			
@@ -123,6 +124,7 @@ module.exports = {
 			}
 
 			this.save();
+			//Match.update(this.id, this.toJSON());
 			
 			log.verbose('Pause resume match: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
 			return this.matchStatus;
