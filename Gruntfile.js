@@ -48,7 +48,8 @@ module.exports = function(grunt) {
 	      	
 	      	unit: {
 	        	options: {
-	          		reporter: 'spec'
+	          		reporter: 'spec',
+	          		timeout: 2000,
 	        	},
 	        	src: ['test/unit/*spec.js']
 	      	},
@@ -56,6 +57,7 @@ module.exports = function(grunt) {
 	      	integration: {
 	        	options: {
 	          		reporter: 'spec',
+	          		timeout: 2000,
 	          		slow: 200,
 	        	},
 	        	src: ['test/integration/*spec.js']
@@ -63,7 +65,9 @@ module.exports = function(grunt) {
 
 	      	all: {
 	        	options: {
-	          		reporter: 'spec'
+	          		reporter: 'spec',
+	          		timeout: 2000,
+	          		slow: 200,
 	        	},
 	        	src: ['test/unit/*spec.js', 'test/integration/*spec.js']
 	      	},
@@ -76,7 +80,7 @@ module.exports = function(grunt) {
 			},
 
 			testall: {
-				files: ['*.js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js', 'test/integration/*js'],
+				files: ['*.js', 'config/**/*js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js', 'test/integration/*js'],
 				//tasks: ['jshint:all', 'mochaTest:unit', 'startMongo', 'wait:giveMongoSomeTimeToLoad', 'force:on','mochaTest:integration', 'force:restore', 'stopMongo'],
 				tasks: ['jshint:all', 'mochaTest:all'],
 				options: {
@@ -86,7 +90,7 @@ module.exports = function(grunt) {
 
 
 			testu: {
-				files: ['*.js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js'],
+				files: ['*.js', 'config/**/*js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js',],
 				tasks: ['jshint:testu', 'mochaTest:unit'],
 				options: {
 					//spawn: false,
@@ -95,7 +99,7 @@ module.exports = function(grunt) {
 
 
 			testi: {
-				files: ['*.js', 'lib/**/*js', 'api/**/*js', 'test/integration/*js'],
+				files: ['*.js', 'config/**/*js', 'lib/**/*js', 'api/**/*js', 'test/unit/*js', 'test/integration/*js'],
 				tasks: ['jshint:testi', 'mochaTest:integration'],
 				options: {
 					// spawn: false,
@@ -104,26 +108,9 @@ module.exports = function(grunt) {
 
 		},
 
-		wait: {
-			giveMongoSomeTimeToLoad: {      
-	            options: {
-	            	delay: 1000,
-	                before : function(options) {
-	                    //console.log('pausing %dms', options.delay);
-	                },
-	                after : function() {
-	                    //console.log('pause end');
-	                }
-	            }
-	        },
-		},
+		
 
-		concurrent: {
-			serve: ['watch:testu','nodemon:dev'],
-			options: {
-                logConcurrentOutput: true
-            }
-		},
+
 
 		'sftp-deploy': {
 	      staging: {
@@ -145,9 +132,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.loadNpmTasks('grunt-contrib-watch');
-	grunt.loadNpmTasks('grunt-services');
 	grunt.loadNpmTasks('grunt-nodemon');
-	grunt.loadNpmTasks('grunt-concurrent');
 	grunt.loadNpmTasks('grunt-node-inspector');
 	grunt.loadNpmTasks('grunt-sftp-deploy');
 
@@ -158,12 +143,14 @@ module.exports = function(grunt) {
 
 
 	grunt.registerTask('test', 'Runs Mocha tests add --watch for continuous', function () {
-
+		
 	    if(grunt.option('watch')) {
+
       		grunt.task.run([
     			'watch:testall'
     		]);
 	    } else {
+
 		    grunt.task.run([
 		        'jshint:all',
 		        'mochaTest:all'
@@ -171,4 +158,21 @@ module.exports = function(grunt) {
 	    }
 	});
 
+	grunt.registerTask('utest', 'Runs Mocha tests add --watch for continuous', function () {
+		
+	    if(grunt.option('watch')) {
+
+      		grunt.task.run([
+    			'watch:testu'
+    		]);
+	    } else {
+
+		    grunt.task.run([
+		        'jshint:testu',
+		        'mochaTest:unit'
+		    ]);
+	    }
+	});
+
+	grunt.registerTask('default', []);
 };

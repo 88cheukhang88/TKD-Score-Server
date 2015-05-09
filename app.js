@@ -1,283 +1,56 @@
-
-
-var _ = require('lodash');
-var log = require('./lib/logger.js');
-
-var Utils = require('./lib/utils');
-
-var config = require('./config.js');
-
-
-
-
-
-/********************************************************/
-/* Prepare Express										*/
-/********************************************************/
-
-var express = require('express');
-var app = module.exports = express();
-var server = require('http').Server(app);
-io = require('socket.io')(server);
-
-///// Load config into app so we can access it easily
-_.forEach(config, function(arg, key) {
-	app.set(key, arg) ;
-});
-
-///// Import externally set options
-app.set('env', process.env.TKD_ENV || app.get('env'));
-
-if( ['development', 'staging', 'testing', 'production'].indexOf(app.get('env')) === -1) {
-	throw new Error('Environment ' + app.get('env') + ' is not allowed');
-}
-
-app.set('port', process.env.TKD_PORT || app.get('port'));
-app.set('loglevel', process.env.TKD_LOGLEVEL || app.get('loglevel'));
-log.transports.console.level = app.get('loglevel');
-
-
-var bodyParser = require('body-parser');
-app.use(bodyParser());
-
-
-var cookieParser = require('cookie-parser');
-app.use(cookieParser('optional secret string'));
-
-var expressSession = require('express-session');
-app.use(expressSession({
-	secret: app.get('SESSION_SECRET'), 
-	name: 'sid', 
-	cookie:{secure:false}
-}));
-
-
-
-// Extend the response obj with some custom response helpers 
-Utils.loadAllFilesIntoObj(__dirname + '/api/responses/', express.response);
-
-
-app.use('/', express.static(__dirname + '/../TKD-Score-Web/dist/'));
-
-
-
-/********************************************************/
-/* Load Up Mongoose										*/
-/********************************************************/
-
-switch(app.get('env')) {
-	case 'testing' :
-		app.set('mongo_uri', app.get('MONGO_TESTING_URI'));
-		break;
-	case 'development' :
-		app.set('mongo_uri', app.get('MONGO_DEVELOPMENT_URI'));
-		break;
-	case 'staging' :
-		app.set('mongo_uri', app.get('MONGO_STAGING_URI'));
-		break;
-	case 'production' :
-		app.set('mongo_uri', app.get('MONGO_PRODUCTION_URI'));
-		break;
-	default:
-		app.set('mongo_uri', app.get('MONGO_DEVELOPMENT_URI'));
-	
-}
-
-var mongoose = require('mongoose');
-
-var db = mongoose.connect(app.get('mongo_uri'));
-mongoose.connection.on('error', function(err) {
-	throw err;
-});
-
-
-
-// Extend our validator (mongules for now) with some custom validators
-var validator = require('mongules');
-
-validator.extend('hasNumber', function(str) {
-    return /[0-9]/.test(str);
-});
-validator.hookMsg(
-    'hasNumber', 'Must contain at least one number'
-);
-
-validator.extend('hasUpperLetter', function(str) {
-    return /[A-Z]/.test(str);
-});
-validator.hookMsg(
-    'hasUpperLetter', 'Must contain at least one uppercase letter'
-);
-
-validator.extend('hasLowerLetter', function(str) {
-    return /[a-z]/.test(str);
-});
-validator.hookMsg(
-    'hasLowerLetter', 'Must contain at least one lowercase letter'
-);
-
-
-
-
-
-
-/********************************************************/
-/* Load Extras											*/
-/********************************************************/
-
-
-
-
-/********************************************************/
-/* Prepare Passport										*/
-/********************************************************/
-
-
-// README: http://aleksandrov.ws/2013/09/12/restful-api-with-nodejs-plus-mongodb/
-
-//var passport = require('passport');
-//app.use(passport.initialize());
-
-
-
-
-
-
-/********************************************************/
-/* Load Controllers										*/
-/********************************************************/
-
-Utils.loadController(app, io, require(__dirname + '/api/Hello/HelloCtrl.js'));
-Utils.loadController(app, io, require(__dirname + '/api/Logger/LoggerCtrl.js'));
-Utils.loadController(app, io, require(__dirname + '/api/Match/MatchCtrl.js'));
-
-
-
-
-/********************************************************/
-/* Load Error Handler									*/
-/********************************************************/
-
-var developmentErrorHandler = function (err, req, res, next) {
-	if (req.is('json')) {
-		log.error(err);
-		return res.internalError(null, err);
-
-	} else {
-		return next(err);
-	}
-};
-
-var productionErrorHandler = function (err, req, res, next) {
-	if (req.is('json')) {
-		log.error(err);
-		console.log('hello');
-		return res.internalError('Sorry - Something blew up! Please contact support.', err);
-	} else {
-		return next(err);
-	}
-};
-
-var validationErrorHandler = function (err, req, res, next) {
-	if(err) {
-		if(err.name === "MongoError" && err.code === 11000) {
-
-			// Intercept mongo duplicatr key error and throw as a validation error
-			// extract info from mongo error string
-			var path = err.err.match(/\$[a-zA-Z0-9]+/)[0].replace('$','');
-			var value = err.err.match(/"\w+/)[0].replace(/"/,'');
-			
-			var uniqueError = {
-				name: 'ValidationError',
-				message: value + ' is not available',
-				path: path,
-				err: err
-			};
-			log.verbose('Mongo Duplicate Key Error:');
-			log.verbose(uniqueError);
-			return res.validationError(null, uniqueError);
-		}
-
-		if(err.name === "ValidationError") {
-			return res.validationError(null, err);
-		} else {
-			return next(err);
-		}
-	}
-};
-
-app.use(validationErrorHandler);
-
-switch(app.get('env')) {
-	case 'production' :
-		app.use(productionErrorHandler);
-		break;
-
-	case 'testing':
-	case 'development' :
-	case 'staging' :
-		app.use(developmentErrorHandler);
-		break;
-	default:
-		app.use(developmentErrorHandler);
-}
-
-
-
-/********************************************************/
-/* Launch Application									*/
-/********************************************************/
-mongoose.connection.once('open', function(){
-	server.listen(app.get('port'));
-	
-	log.info('Mongoose has opened a connection to ' + app.get('mongo_uri'));
-	log.msg('Console will show logs up to ' + app.get('loglevel') + ' messages');
-	log.msg(app.get('NAME') + ' is Listening on ' + app.get('port') + ' in ' + app.get('env') + ' mode...');
-	console.log(); 
-
-	app.set('state', 'ready');
-	app.emit('ready');
-
-
-
-
-});
-
-
-
-/////////////////////////
-// Real time Socket IO
-// Needs major refactoring into a more MVC structure
-// Need a way to test!
-/////////////////////////
-io.on('connection', function (socket) {
-    console.log('A socket connected with id:' + socket.id);
-
-    socket.on('disconnect', function(){
-	    console.log('socket with id:' + socket.id + ' disconnected');
-	});
-});
-
-
-
-
-io.on('connection', function (socket) {
-    // join
-    // Which match to listen to
-	var currentMatchId = false;
-	socket.on('join', function(data) {
-		socket.leave(currentMatchId);
-		var id = data.id;
-		socket.join(id);
-		socket.viewType = data.viewType;
-		currentMatchId = id;
-	});
-});
-
-
-
-
-
-
-
-
+/**
+ * app.js
+ *
+ * Use `app.js` to run your app without `sails lift`.
+ * To start the server, run: `node app.js`.
+ *
+ * This is handy in situations where the sails CLI is not relevant or useful.
+ *
+ * For example:
+ *   => `node app.js`
+ *   => `forever start app.js`
+ *   => `node debug app.js`
+ *   => `modulus deploy`
+ *   => `heroku scale`
+ *
+ *
+ * The same command-line arguments are supported, e.g.:
+ * `node app.js --silent --port=80 --prod`
+ */
+ 
+
+// Ensure a "sails" can be located:
+(function() {
+  var sails;
+  try {
+    sails = require('sails');
+  } catch (e) {
+    console.error('To run an app using `node app.js`, you usually need to have a version of `sails` installed in the same directory as your app.');
+    console.error('To do that, run `npm install sails`');
+    console.error('');
+    console.error('Alternatively, if you have sails installed globally (i.e. you did `npm install -g sails`), you can use `sails lift`.');
+    console.error('When you run `sails lift`, your app will still use a local `./node_modules/sails` dependency if it exists,');
+    console.error('but if it doesn\'t, the app will run with the global sails instead!');
+    return;
+  }
+
+  // Try to get `rc` dependency
+  var rc;
+  try {
+    rc = require('rc');
+  } catch (e0) {
+    try {
+      rc = require('sails/node_modules/rc');
+    } catch (e1) {
+      console.error('Could not find dependency: `rc`.');
+      console.error('Your `.sailsrc` file(s) will be ignored.');
+      console.error('To resolve this, run:');
+      console.error('npm install rc --save');
+      rc = function () { return {}; };
+    }
+  }
+
+
+  // Start server
+  sails.lift(rc('sails'));
+})();
