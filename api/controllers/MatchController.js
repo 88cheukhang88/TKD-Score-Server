@@ -8,9 +8,10 @@ module.exports = {
 	},
 
 	points: function(req, res, next) {
+
 		var id = req.param('id');
-		var player = data.player;
-		var points = data.points;
+		var player = req.param('player');
+		var points = req.param('points');
 		Match.points(id, player, points, function(err, match) {
 			if(err) {return log.error(err);}
 		});
@@ -18,17 +19,17 @@ module.exports = {
 
 	changeRound: function(req, res, next) {
 		var id = req.param('id');
-		var value = data.value;
-		var points = data.points;
-		MatchMatch.changeRound(id, value, function(err, match) {
+		var value = req.param('value');
+		
+		Match.changeRound(id, value, function(err, match) {
 			if(err) {return log.error(err);}
 		});
 	},
 
 	penalties: function(req, res, next) {
 		var id = req.param('id');
-		var player = data.player;
-		var points = data.points;
+		var player = req.param('player');
+		var points = req.param('points');
 		Match.penalties(id, player, points, function(err, match) {
 			if(err) {return log.error(err);}
 		});
@@ -43,6 +44,7 @@ module.exports = {
 
 	resetMatch: function(req, res, next) {
 		var id = req.param('id');
+
 		Match.resetMatch(id, function(err, match) {
 			if(err) {return log.error(err);}
 		});

@@ -31,9 +31,10 @@
     "sails-mongo": "^0.10.3",
     "sails-mysql": "^0.10.4",
     "skipper": "^0.5.2",
+    "socketio-wildcard": "^0.1.1",
     "timer-stopwatch": "git://github.com/mickcrozier/timer-stopwatch.git#master",
-    "winston": "^0.7.3",
-    "validator": "^3.24.0"
+    "validator": "^3.24.0",
+    "winston": "^0.7.3"
   },
   "scripts": {
     "start": "node app.js",

@@ -125,7 +125,7 @@ module.exports = {
 
 			this.save();
 			//Match.update(this.id, this.toJSON());
-			
+	
 			log.verbose('Pause resume match: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
 			return this.matchStatus;
 		},
@@ -210,7 +210,7 @@ module.exports = {
 			MatchService.roundTimer[this.id].reset(this.roundLengthMS);
 			this.roundTimeMS = this.roundLengthMS;
 			
-			Match.message(this.id, {command:'roundtime', ms:this.roundTimeMS});
+			Match.sendmessage(this.id, 'roundtime', {ms:this.roundTimeMS});
 			
 
 			MatchService.breakTimer[this.id].reset(this.breakLengthMS);
@@ -226,7 +226,7 @@ module.exports = {
 				io.in(this.id).emit('pausetime', {ms:0});
 			}
 			*/
-
+			log.verbose('Reseting Match ' + this.toString());
 
 			this.round = 1;
 			this.player1Points = 0;
@@ -420,17 +420,18 @@ module.exports = {
     
 
 	pauseResumeMatch: function(id, cb) {
-		Match.findById(id, function(err, match) {
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
 			match.pauseResume();
-			cb(null, match);
+ 			cb(null, match);
 		});
 	},
 
 	resetMatch: function(id, cb) {
-		Match.findById(id, function(err, match) {
+
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -441,7 +442,8 @@ module.exports = {
 
 
 	resetTimer: function(id, cb) {
-		Match.findById(id, function(err, match) {
+
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -451,7 +453,7 @@ module.exports = {
 	},
 
 	points: function(id, player, points, cb) {
-		Match.findById(id, function(err, match) {
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -461,7 +463,7 @@ module.exports = {
 	},
 
 	changeRound: function(id, value, cb) {
-		Match.findById(id, function(err, match) {
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -471,7 +473,7 @@ module.exports = {
 	},
 
 	penalties: function(id, player, points, cb) {
-		Match.findById(id, function(err, match) {
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -481,7 +483,7 @@ module.exports = {
 	},
 
 	registerScore: function(id, data, cb) {
-		Match.findById(id, function(err, match) {
+		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
@@ -491,7 +493,21 @@ module.exports = {
 	},
 
 	soundhorn: function(id) {
-		Match.message(id, {command:'soundhorn'});
+		this.sendmessage(id, 'soundhorn');
+	},
+
+	sendmessage: function(match, event, data) {
+		var id = null;
+		if(typeof match === 'number') {
+			id = match;
+		} else {
+			id = match.id;
+		}
+		var room = 'sails_model_match_' + id + ':message';
+		sails.log.silly('Published data to ' + room + ' Event: ' + event, data)
+		sails.sockets.broadcast(room, event, data);
 	}
+
+
 
 };

@@ -26,7 +26,7 @@ var logger = new (winston.Logger)({
 	levels: myCustomLevels.levels,
 }); 
 
-logger.add(winston.transports.Console, {colorize: true, level:'info'});
+logger.add(winston.transports.Console, {colorize: true, level:sails.config.log.level});
 
 winston.addColors(myCustomLevels.colors);
 

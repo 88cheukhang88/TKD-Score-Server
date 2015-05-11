@@ -42,7 +42,8 @@
 
 		roundTimer[match.id].on('time', function (time) {
 	    	//io.in(match.id + "").emit('roundtime', time);
-	    	Match.message(match.id, {command:'roundtime', ms:time});
+	    	//Match.message(match.id, {command:'roundtime', ms:time});
+	    	Match.sendmessage(match, 'roundtime', time);
 	    });
 
 	    roundTimer[match.id].on('done', function () {
@@ -52,17 +53,20 @@
 
 	    breakTimer[match.id].on('time', function (time) {
 	    	//io.in(match.id + "").emit('breaktime', time);
-	    	Match.message(match.id, {command:'breaktime', ms:time});
+	    	Match.sendmessage(match, 'breaktime', time);
+	    	//Match.message(match.id, {command:'breaktime', ms:time});
 	    });
 
 	    breakTimer[match.id].on('almostdone', function () {
 	    	//io.in(match.id + "").emit('soundhorn');
+
 	    	Match.soundhorn(match.id);
 	    });
 
 	    pauseWatch[match.id].on('time', function (time) {
 	    	//io.in(match.id + "").emit('pausetime', time);
-	    	Match.message(match.id, {command:'pausetime', ms:time});
+	    	Match.sendmessage(match, 'pausetime', time);
+	    	//Match.message(match.id, {command:'pausetime', ms:time});
 
 	    	//if(time.ms > 120000) {
 	    		// STOP AFTER 2 MINUTES
