@@ -82,45 +82,58 @@
 		roundTimer[match.id].on('done', function() {
 
 			var updatedMatch = matchStore.get(match.id); // get updated match data from memory
-			var oldStatus = updatedMatch.matchStatus;
-			if(updatedMatch.round < updatedMatch.numberOfRounds) {
-				// break
-				roundTimer[updatedMatch.id].reset();
-				breakTimer[updatedMatch.id].start();
-				updatedMatch.matchStatus = 'break';
-				updatedMatch.round = updatedMatch.round + 1;
-				Match.update(updatedMatch.id, updatedMatch);
-				log.verbose('Round Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
-			} 
-			else if (updatedMatch.round === updatedMatch.numberOfRounds) {
-				if(updatedMatch.player1Points === updatedMatch.player2Points) {
-					// sudden death
-					updatedMatch.player1Points = 0;
-					updatedMatch.player2Points = 0;
-					roundTimer[match.id].reset();
-					breakTimer[match.id].start();
+			
+			
+				var oldStatus = updatedMatch.matchStatus;
+				if(updatedMatch.round < updatedMatch.numberOfRounds) {
+					// break
+					roundTimer[updatedMatch.id].reset();
+					breakTimer[updatedMatch.id].start();
 					updatedMatch.matchStatus = 'break';
-					updatedMatch.round = match.round + 1;
-					log.verbose('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
-					Match.update(updatedMatch.id, updatedMatch);
-				} else {
-					// End of match
-					log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
-					updatedMatch.matchStatus = 'complete';
-					Match.update(updatedMatch.id, updatedMatch);
+					updatedMatch.round = updatedMatch.round + 1;
+					//Match.changeRound(updatedMatch.id, updatedMatch.round + 1);
+					console.log('ABOUT TO SAVE NEW ROUND', updatedMatch.round);
+					
+					log.verbose('Round Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+				} 
+				else if (updatedMatch.round === updatedMatch.numberOfRounds) {
+					if(updatedMatch.player1Points === updatedMatch.player2Points) {
+						// sudden death
+						updatedMatch.player1Points = 0;
+						updatedMatch.player2Points = 0;
+						roundTimer[match.id].reset();
+						breakTimer[match.id].start();
+						updatedMatch.matchStatus = 'break';
+						updatedMatch.round = updatedMatch.round + 1;
+						log.verbose('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+						
+					} else {
+						// End of match
+						updatedMatch.matchStatus = 'complete';
+						log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+						
+					}
 				}
-			}
-			else {
-				log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
-				updatedMatch.matchStatus = 'complete';
-				Match.update(updatedMatch.id, updatedMatch);
-			}
+				else {
+					updatedMatch.matchStatus = 'complete';
+					log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+					
+					
+				}
+				//console.log('updating match:', updatedMatch);
+				
+				Match.update(updatedMatch.id, updatedMatch).exec(function(err, returnedMatch) {
+					if(err) {throw new Error(err);}
+					//console.log('RETURNED MATCH', returnedMatch);
+				});
+		
+			
 		});	
 			
 
 		breakTimer[match.id].on('done', function() {
 			var updatedMatch = matchStore.get(match.id); // get updated match data from memory
-
+			
 			//if(match.round <= match.numberOfRounds) {
 				// Pause round clock waiting for operator input
 				pauseWatch[updatedMatch.id].start();
@@ -128,6 +141,7 @@
 				Match.update(updatedMatch.id, updatedMatch);
 				
 			//} 
+	
 		});
 	}
 

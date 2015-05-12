@@ -38,6 +38,29 @@ describe('Match Model', function() {
 		});
 	});
 
+	it('should add an opposing point on full penalty', function(done) {
+		Match.create().exec(function(err, match) {
+			expect(match.player1Penalties).to.equal(0);
+			expect(match.player2Points).to.equal(0);
+			match.penalties(1, 2);
+			expect(match.player1Penalties).to.equal(2);
+			expect(match.player2Points).to.equal(1);
+			done();
+		});
+	});
+
+	it('should minus an opposing point if the penalty is dropped', function(done) {
+		Match.create().exec(function(err, match) {
+			//match.penalties(1, 2);
+			match.player1Penalties = 2;
+			match.player2Points = 1;
+			match.penalties(1, -1);
+			expect(match.player1Penalties).to.equal(1);
+			expect(match.player2Points).to.equal(0);
+			done();
+		});
+	});
+
 	describe('Match Scoring', function() {
 
 		it('should correctly assess 2 judge scoring 2 points (= 2 points)', function(done) {
@@ -212,16 +235,15 @@ describe('Match Auto Operations', function() {
 	testData.beforeEach();
 	testData.afterEach();
 
-	xit('should advance round, until round 3', function(done) {
+	it('should advance round, until round 3', function(done) {
 
 		var record = {
-			roundLengthMS: 100,
-			breakLengthMS: 100,
+			roundLengthMS: 500,
+			breakLengthMS: 500,
 		};
 
 		Match.create(record).exec(function(err, match) {
-			
-
+		
 			setTimeout(function() {
 				match.resetMatch();
 				match.player1Points = 2; // ensure we do not go to sudden death
@@ -232,11 +254,12 @@ describe('Match Auto Operations', function() {
 			
 			setTimeout(function() {
 				expect(match.round).to.equal(1);
-			}, 150); // in R1
+			}, 400); // in R1
 
 			setTimeout(function() {
+				expect(match.player1Points).to.equal(2);
 				expect(match.round).to.equal(2);
-			}, 250); // in R1 break
+			}, 900); // in R1 break
 
 			setTimeout(function() { // coming out of R2 break, for some reason roundTimer done is fired stright away
 				expect(match.matchStatus).to.be('pausedround');
@@ -244,27 +267,27 @@ describe('Match Auto Operations', function() {
 				match.pauseResume();
 				expect(match.round).to.equal(2);
 				console.log('hey2');
-			}, 340); // end of break
+			}, 1300); // end of break
 
 			setTimeout(function() {
 				expect(match.round).to.equal(2);
-			}, 380); // In R2
+			}, 1600); // In R2
 
 			setTimeout(function() {
 				expect(match.matchStatus).to.be('pausedround');
 				match.pauseResume();
 				console.log('hey3');
-			}, 550); // end if break
+			}, 2500); // end if break
 
 			setTimeout(function() {
 				expect(match.round).to.equal(3);
-			}, 600); // in R3
+			}, 2800); // in R3
 
 			setTimeout(function() {
 				expect(match.round).to.equal(3);
 				expect(match.matchStatus).to.equal('complete');
 				done();
-			}, 700); // End of Match
+			}, 3200); // End of Match
 		});
 	});
 

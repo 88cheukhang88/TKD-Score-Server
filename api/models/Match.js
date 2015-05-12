@@ -92,6 +92,7 @@ module.exports = {
 			var oldStatus = this.matchStatus;
 			switch(this.matchStatus) {
 				case 'round':
+				case 'suddendeath':
 					MatchService.roundTimer[this.id].stop();
 					MatchService.pauseWatch[this.id].start();
 					this.matchStatus = 'pausedround';
@@ -101,7 +102,7 @@ module.exports = {
 					if (MatchService.breakTimer[this.id].ms > MatchService.breakTimer[this.id].almostDoneMS) {
 						MatchService.breakTimer[this.id].stop();
 						this.breakTimeMS = MatchService.breakTimer[this.id].ms;
-						pauseWatch[this.id].start();
+						MatchService.pauseWatch[this.id].start();
 						this.matchStatus = 'pausedbreak';
 						break;
 					} 	
@@ -113,7 +114,12 @@ module.exports = {
 					MatchService.pauseWatch[this.id].reset();
 					MatchService.breakTimer[this.id].reset();
 					MatchService.roundTimer[this.id].start();
-					this.matchStatus = 'round';
+					if(this.round > this.numberOfRounds) {
+						this.matchStatus = 'suddendeath';
+					} else {
+						this.matchStatus = 'round';
+					}
+					
 					break;
 				case 'pausedbreak':
 
@@ -154,6 +160,12 @@ module.exports = {
 				this.player2Points = playerPoints;
 				this.player2Penalies = playerPenalties;
 			}
+
+			if(this.round > this.numberOfRounds) { // is sudden death
+				MatchService.roundTimer[this.id].stop();
+				this.matchStaus = 'complete';
+			}
+
 			this.save();
 		},
 
@@ -163,11 +175,11 @@ module.exports = {
 				this.matchStatus = '_endbreakearly';
 				this.pauseResume();
 			} else {
-				if(round > this.numberOfRounds) {
-					round = this.numberOfRounds;
+				if(round > this.numberOfRounds + 1) {
+					round = this.numberOfRounds + 1;
 				}
 
-				if(round < 1) {
+				if(round < 1 || typeof round !== 'number') {
 					round = 1;
 				}
 
@@ -177,28 +189,39 @@ module.exports = {
 
 		},
 
-		penalties: function (player, points) {
-			var playerPoints = 0;
+		penalties: function (player, penalties) {
+			var opposingPlayerPoints = 0;
 			var playerPenalties = 0;
 			if(player === 1) {
-				playerPoints = this.player1Points;
+				opposingPlayerPoints = this.player2Points;
 				playerPenalties = this.player1Penalties;
 			} else {
-				playerPoints = this.player2Points;
+				opposingPlayerPoints = this.player1Points;
 				playerPenalties = this.player2Penalties;
 			}
 
+	
+			// Remove the opposingExtraPoints already paid
+			var opposingExtraPoints = Math.floor(playerPenalties / 2);
+			opposingPlayerPoints = opposingPlayerPoints - opposingExtraPoints;
 
-			playerPenalties += points;
+		
+
+			playerPenalties += penalties;
 			if (playerPenalties < 0) {playerPenalties = 0;}
 			if (playerPenalties > 8) {playerPenalties = 8;}
 
 
+			// Add the newly calculated opposing extra points
+			opposingExtraPoints = Math.floor(playerPenalties / 2);
+			opposingPlayerPoints += opposingExtraPoints;
+		
+
 			if(player === 1) {
-				this.player1Points = playerPoints;
+				this.player2Points = opposingPlayerPoints;
 				this.player1Penalties = playerPenalties;
 			} else {
-				this.player2Points = playerPoints;
+				this.player1Points = opposingPlayerPoints;
 				this.player2Penalties = playerPenalties;
 			}
 			this.save();
@@ -403,7 +426,6 @@ module.exports = {
 	afterUpdate: function(record, next) {
 		// Save to memory
 		MatchService.matchStore.save(record);
-
 		// Publish the match update to all subscribed clients
 		Match.publishUpdate(record.id, record);
 		next();
@@ -468,7 +490,7 @@ module.exports = {
 			if(!match) {return cb(null, null);}
 
 			match.changeRound(value);
-			cb(null, match);
+			if(cb) {cb(null, match);}
 		});
 	},
 
@@ -504,7 +526,7 @@ module.exports = {
 			id = match.id;
 		}
 		var room = 'sails_model_match_' + id + ':message';
-		sails.log.silly('Published data to ' + room + ' Event: ' + event, data)
+		sails.log.silly('Published data to ' + room + ' Event: ' + event, data);
 		sails.sockets.broadcast(room, event, data);
 	}
 
