@@ -109,13 +109,14 @@
 						
 					} else {
 						// End of match
-						updatedMatch.matchStatus = 'complete';
+						
+						Match.completeMatch(updatedMatch);
 						log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 						
 					}
 				}
 				else {
-					updatedMatch.matchStatus = 'complete';
+					Match.completeMatch(updatedMatch);
 					log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 					
 					

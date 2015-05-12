@@ -5,6 +5,10 @@ module.exports = {
 
 	attributes: {
 
+		number: {
+			type: 'integer',
+		},
+
 		player1: {
 			type: 'string',
 			defaultsTo: 'Hong',
@@ -163,7 +167,7 @@ module.exports = {
 
 			if(this.round > this.numberOfRounds) { // is sudden death
 				MatchService.roundTimer[this.id].stop();
-				this.matchStaus = 'complete';
+				Match.completeMatch(this);
 			}
 
 			this.save();
@@ -307,6 +311,8 @@ module.exports = {
 			var scoreTimeout = match.scoreTimeout;
 			var agree = match.agree;
 
+			Match.sendmessage(match.id, 'judge', {source: source, points: points});
+
 			if(!scoreBuffer[id]) {
 				scoreBuffer[id] = [];
 			}
@@ -406,7 +412,29 @@ module.exports = {
 			values.roundTimeMS = values.roundLengthMS;
 			values.breakLengthMS = values.breakLengthMS;
 		}
-		next();
+
+		if(!values.number) {
+			// find the highest 'number' and make it the next highest by default
+			Match.find({ 
+				where: { /* need to find parent id when implemented */ },  
+				limit: 1,
+				sort: 'number DESC',
+			}, function(err, found) {
+				if(err) {return next(err);}
+				if(found.length < 1) {
+					values.number = 1;
+				} else {
+					values.number = parseInt(found[0].number + 1);
+				}
+				return next();
+			});
+		} else {
+			
+			return next();
+		}
+
+
+		//next();
 	},
 
 	beforeUpdate: function(values, next) {
@@ -419,13 +447,17 @@ module.exports = {
 
 	afterCreate: function(record, next) {
 		// Save to memory
-		MatchService.matchStore.save(record);
+		if(record.matchStatus !== 'complete') {
+			MatchService.matchStore.save(record);
+		}
 		next();
 	},
 
 	afterUpdate: function(record, next) {
 		// Save to memory
-		MatchService.matchStore.save(record);
+		if(record.matchStatus !== 'complete') {
+			MatchService.matchStore.save(record);
+		}
 		// Publish the match update to all subscribed clients
 		Match.publishUpdate(record.id, record);
 		next();
@@ -512,6 +544,14 @@ module.exports = {
 			match.registerScore(data);
 			cb(null, match);
 		});
+	},
+
+	completeMatch: function(match) {
+		match.matchStatus = 'complete';
+		//match.roundTimeMS = MatchService.roundTimer[match.id];
+		//match.breakTimeMS = MatchService.breakTimer[match.id];
+		////// TODO - REMOVE MATCH FROM MEMORY ********//
+		//MatchService.matchStore.remove(match.id);
 	},
 
 	soundhorn: function(id) {
