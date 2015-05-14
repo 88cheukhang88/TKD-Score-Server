@@ -58,7 +58,32 @@ module.exports = {
 	registerScore: function(req, res, next) {
 		var id = req.param('id');
 
+		var source = req.session.id;
+		var data = {
+			source: source,
+			player: req.param('player'),
+			target: req.param('target'),
+			turning: req.param('turning'),
+		};
+
 		Match.registerScore(id, data, function(err, match) {
+			if(err) {return log.error(err);}
+		});
+	},
+
+	registerJudge: function (req, res, next) {
+		var identifier = req.session.id;
+		console.log(identifier);
+		var id = req.param('id');
+		Match.registerJudge(id, identifier, function(err, match) {
+			if(err) {return log.error(err);}
+		});
+	},
+
+	removeJudge: function(req, res, next) {
+		var num = req.param('judge');
+		var id = req.param('id');
+		Match.removeJudge(id, num, function(err, match) {
 			if(err) {return log.error(err);}
 		});
 	},

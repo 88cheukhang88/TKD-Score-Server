@@ -84,8 +84,114 @@ module.exports = {
 			defaultsTo: 1000,
 		},
 
+		pointsBody: {
+			type: 'integer',
+			defaultsTo: 1,
+		},
+
+		pointsBodyTurning: {
+			type: 'integer',
+			defaultsTo: 3,
+		},
+
+		pointsHead: {
+			type: 'integer',
+			defaultsTo: 4,
+		},
+
+		pointsHeadTurning: {
+			type: 'integer',
+			defaultsTo: 5,
+		},
+
+		showIndicators: {
+			type: 'boolean',
+			defaultsTo: false,
+		},
+
+		judge1: {
+			type: 'string',
+		},
+
+		judge2: {
+			type: 'string',
+		},
+
+		judge3: {
+			type: 'string',
+		},
+
+		judge4: {
+			type: 'string',
+		},
+
+
 		toString: function() {
 			return '[match] ' + this.player1 + ' vs. ' + this.player2;
+		},
+
+
+		registerJudge: function(identifier) {
+			// For judge pressed indicators
+			var judges = [
+				this.judge1,
+				this.judge2,
+				this.judge3,
+				this.judge4,
+			];
+
+			var judge = false;
+			var noJudge = false;
+			_.forEach(judges, function(judgeSource, key) {
+				if(judgeSource === identifier) {
+					judge = false;
+					noJudge = true;
+					return;
+				}
+
+				if(!judgeSource && !noJudge) {
+					judge = key + 1;
+				}
+			});
+
+			log.debug('Registering Judge ' + identifier + ' into slot ' + judge)
+			
+			if(judge !== false) {
+			
+				switch(judge) {
+					case 1:
+						this.judge1 = identifier;
+						break;
+					case 2:
+						this.judge2 = identifier;
+						break;
+					case 3:
+						this.judge3 = identifier;
+						break;
+					case 4:
+						this.judge4 = identifier;
+						break;
+				};
+				this.save();
+			}
+		},
+
+		removeJudge: function(num) {
+			switch(num) {
+				case 1:
+					this.judge1 = "";
+					break;
+				case 2:
+					this.judge2 = "";
+					break;
+				case 3:
+					this.judge3 = "";
+					break;
+				case 4:
+					this.judge4 = "";
+					break;
+			};
+			this.save();
 		},
 
 
@@ -295,14 +401,30 @@ module.exports = {
 			return pauseWatch[this.id];
 		},
 
-		registerScore: function(data) {
+		registerScore: function(data, cb) {
 
 			///// Used for corner judges only
+			var judges = [
+				this.judge1,
+				this.judge2,
+				this.judge3,
+				this.judge4,
+			];
+
+			var points_table = [
+				{turning: true, target:'head', points: this.pointsHeadTurning},
+				{turning: false, target:'head', points: this.pointsHead},
+				{turning: true, target:'body', points: this.pointsBodyTurning},
+				{turning: false, target:'body', points: this.pointsBody},
+			];
 
 			var match = this;
 
 			var player = data.player;
-			var points = data.points;
+			var target = data.target;
+			var turning = data.turning || false;
+
+			var points = _.result(_.find(points_table, {turning:turning, target:target}), 'points');
 
 			var source = data.source;
 			var aggregatePoints = 0;
@@ -311,7 +433,19 @@ module.exports = {
 			var scoreTimeout = match.scoreTimeout;
 			var agree = match.agree;
 
-			Match.sendmessage(match.id, 'judge', {source: source, points: points});
+			var judgeIsInList = false;
+
+			_.forEach(judges, function(judge) {
+				if(judge === source) {
+					judgeIsInList = true;
+					return;
+				}
+			})
+
+			if(!judgeIsInList) {
+				log.error('Device ' + source + ' is not registered for match ' + this.match);
+				return;
+			}
 
 			if(!scoreBuffer[id]) {
 				scoreBuffer[id] = [];
@@ -335,35 +469,36 @@ module.exports = {
 					
 					if(scoreBuffer[id][player].length >= agree) { //if enough judges have scored **** THIS IS NOT THE END - JUDGES MAY STILL VOTE, IT JUST GETS REPROCESSED UNTIL THE TIMER RUNS OUT
 						var high = 0;
-						var low = 4;
+						var low = 5;
 						var scoreCount = [0,0,0,0,0];
-
-						for(var i=0;i<scoreBuffer[id][player].length;i++) {
+						_.forEach(scoreBuffer[id][player], function(pointsObj) {
 							///// compare scores in buffer - set the lowest and hifgest scores given
 							
-							low = Math.min(scoreBuffer[id][player][i].points,low);
-							high = Math.max(scoreBuffer[id][player][i].points,high);
+							low = Math.min(pointsObj.points,low);
+							high = Math.max(pointsObj.points,high);
 							
 							//// how votes for each score (1-4)
-							var val = scoreBuffer[id][player][i].points;
-							scoreCount[val] += 1;
-							
-						}
+							scoreCount[pointsObj.points] += 1;
+						})
+						
 						/// Set the score to be awarded as the lowest value given (just in case they don't all agree - but enough have voted at least 1 point
 						aggregatePoints = low;
 						
+
+
 						// Check the score count - if a score has enough votes set it as the score to be awarded
-						for(i=1; i<5; i++) { // must iterate through all to get the highest score (except 0) 
-							
-							if(scoreCount[i] >= agree) {
-								aggregatePoints = i;
+						_.forEach(scoreCount, function(count, points) {
+							if(count >= agree && points > aggregatePoints) {
+								aggregatePoints = points;
 							}
-						}
+						})
+
+						
 					}
 
 					match.points(player, aggregatePoints);
 
-					//console.log(player + ' awarded ' + aggregatePoints + ' points');
+					log.debug(player + ' awarded ' + aggregatePoints + ' points');
 
 					scoreBuffer[id][player] = [];
 				}, scoreTimeout);
@@ -371,31 +506,41 @@ module.exports = {
 
 
 
-
-
 			// Push the score into the vote buffer
 			if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
-				scoreBuffer[id][player].push({points:points, source:source});
+				scoreBuffer[id][player].push({source: source, points: points});
 				log.verbose(source + ' voted player' + player + ' ' + points + ' points');
+			
 			} else {
 				//Check if the source already exist in array? if not, add the data
 				var alreadyGotIt = false;
-				for(var i=0;i<scoreBuffer[id][player].length;i++) {
-					if(scoreBuffer[id][player][i].source === source) {
-						alreadyGotIt = true;
-						break;
-					}
-					
+				
+
+			
+				if(_.find(scoreBuffer[id][player], {source:source})) {
+					alreadyGotIt = true;
 				}
+					
 				// if the judge has not already cast a vote - add this judges score to the buffer
 				if(!alreadyGotIt) {
-					scoreBuffer[id][player].push({points:points, source:source}); 
+					scoreBuffer[id][player].push({source: source, points: points});
 				 	log.verbose(source + ' voted player' + player + ' ' + points + ' points');
 				}
 			}
 			
 			// For judge pressed indicators
-			Match.message(this.id, {command: 'judge', source:source, player:player, points:points});
+			
+
+
+			var judge = false;
+			_.forEach(judges, function(judgeSource, key) {
+				if(judgeSource === source) {
+					judge = key + 1;
+					return;
+				}
+			});
+
+			Match.sendmessage(this.id, 'judge', {source: source, points: points, target: target, turning: turning, player:player, judge: judge});
 
 		}
 	},
@@ -447,17 +592,21 @@ module.exports = {
 
 	afterCreate: function(record, next) {
 		// Save to memory
+		/*
 		if(record.matchStatus !== 'complete') {
 			MatchService.matchStore.save(record);
 		}
+		*/
 		next();
 	},
 
 	afterUpdate: function(record, next) {
 		// Save to memory
+		/*
 		if(record.matchStatus !== 'complete') {
 			MatchService.matchStore.save(record);
 		}
+		*/
 		// Publish the match update to all subscribed clients
 		Match.publishUpdate(record.id, record);
 		next();
@@ -496,7 +645,6 @@ module.exports = {
 
 
 	resetTimer: function(id, cb) {
-
 		Match.findOne(id, function(err, match) {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
@@ -568,7 +716,27 @@ module.exports = {
 		var room = 'sails_model_match_' + id + ':message';
 		sails.log.silly('Published data to ' + room + ' Event: ' + event, data);
 		sails.sockets.broadcast(room, event, data);
-	}
+	},
+
+	registerJudge: function(id, indentifier, cb) {
+		Match.findOne(id, function(err, match) {
+			if(err) {return cb(err);}
+			if(!match) {return cb(null, null);}
+
+			match.registerJudge(indentifier);
+			cb(null, match);
+		});
+	},
+
+	removeJudge: function(id, num, cb) {
+		Match.findOne(id, function(err, match) {
+			if(err) {return cb(err);}
+			if(!match) {return cb(null, null);}
+
+			match.removeJudge(num);
+			cb(null, match);
+		});
+	},
 
 
 

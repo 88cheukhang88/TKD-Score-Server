@@ -1,5 +1,5 @@
 
-
+/*
 	//////////////////////////////
 	// matchStore will hold an in memory copy of the matches. This is important for time sensitive events - such as timer done events.
 	// matchStore is updated by the 'afterUpdate' lifecycle.
@@ -15,7 +15,7 @@
 	matchStore.remove = function(id) {
 		delete(this[id]);
 	};
-
+*/
 
 	/////////////////////////////////////////////
 	// Timer managment
@@ -81,9 +81,9 @@
 
 		roundTimer[match.id].on('done', function() {
 
-			var updatedMatch = matchStore.get(match.id); // get updated match data from memory
-			
-			
+			//var updatedMatch = matchStore.get(match.id); // get updated match data from memory
+			Match.findOne(match.id).exec(function(err, updatedMatch) {
+
 				var oldStatus = updatedMatch.matchStatus;
 				if(updatedMatch.round < updatedMatch.numberOfRounds) {
 					// break
@@ -128,13 +128,14 @@
 					//console.log('RETURNED MATCH', returnedMatch);
 				});
 		
-			
+			});
 		});	
 			
 
 		breakTimer[match.id].on('done', function() {
-			var updatedMatch = matchStore.get(match.id); // get updated match data from memory
-			
+			//var updatedMatch = matchStore.get(match.id); // get updated match data from memory
+			Match.findOne(match.id).exec(function(err, updatedMatch) {
+
 			//if(match.round <= match.numberOfRounds) {
 				// Pause round clock waiting for operator input
 				pauseWatch[updatedMatch.id].start();
@@ -142,6 +143,7 @@
 				Match.update(updatedMatch.id, updatedMatch);
 				
 			//} 
+			});
 	
 		});
 	}
@@ -149,7 +151,7 @@
 	
 	
 	module.exports = {
-		matchStore: matchStore,
+		//matchStore: matchStore,
 		roundTimer: roundTimer,
 		breakTimer: breakTimer,
 		pauseWatch: pauseWatch,

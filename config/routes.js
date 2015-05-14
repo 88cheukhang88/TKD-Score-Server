@@ -107,6 +107,16 @@ module.exports.routes = {
         action: "registerscore",
     },
 
+    'post /api/match/removejudge': {
+        controller: "Match",
+        action: "removeJudge",
+    },
+
+    'post /api/match/judge': {
+        controller: "Match",
+        action: "registerJudge",
+    },
+
 
 
 };
