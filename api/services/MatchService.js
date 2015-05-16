@@ -92,9 +92,8 @@
 					updatedMatch.matchStatus = 'break';
 					updatedMatch.round = updatedMatch.round + 1;
 					//Match.changeRound(updatedMatch.id, updatedMatch.round + 1);
-					console.log('ABOUT TO SAVE NEW ROUND', updatedMatch.round);
 					
-					log.verbose('Round Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+					log.match('Round Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 				} 
 				else if (updatedMatch.round === updatedMatch.numberOfRounds) {
 					if(updatedMatch.player1Points === updatedMatch.player2Points) {
@@ -105,19 +104,19 @@
 						breakTimer[match.id].start();
 						updatedMatch.matchStatus = 'break';
 						updatedMatch.round = updatedMatch.round + 1;
-						log.verbose('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+						log.match('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 						
 					} else {
 						// End of match
 						
 						Match.completeMatch(updatedMatch);
-						log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+						log.match('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 						
 					}
 				}
 				else {
 					Match.completeMatch(updatedMatch);
-					log.verbose('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
+					log.match('Match Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 					
 					
 				}

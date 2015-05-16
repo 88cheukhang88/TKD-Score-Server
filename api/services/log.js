@@ -2,8 +2,9 @@ var winston = require('winston');
 
 var myCustomLevels = {
     levels: {
-    	msg: 9,
-    	error: 8,
+    	msg: 10,
+    	error: 9,
+        match: 8,
     	warn: 7,
     	info: 6,
     	debug: 5,
@@ -13,6 +14,7 @@ var myCustomLevels = {
     colors: {
     	msg: 'white',
     	error: 'red',
+        match: 'magenta',
     	warn: 'yellow',
     	info: 'cyan',
   		debug: 'blue',

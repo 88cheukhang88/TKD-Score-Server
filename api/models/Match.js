@@ -154,7 +154,7 @@ module.exports = {
 				}
 			});
 
-			log.debug('Registering Judge ' + identifier + ' into slot ' + judge)
+			log.match('Registering Judge ' + identifier + ' into slot ' + judge);
 			
 			if(judge !== false) {
 			
@@ -171,7 +171,7 @@ module.exports = {
 					case 4:
 						this.judge4 = identifier;
 						break;
-				};
+				}
 				this.save();
 			}
 		},
@@ -190,7 +190,7 @@ module.exports = {
 				case 4:
 					this.judge4 = "";
 					break;
-			};
+			}
 			this.save();
 		},
 
@@ -228,6 +228,7 @@ module.exports = {
 						this.matchStatus = 'suddendeath';
 					} else {
 						this.matchStatus = 'round';
+
 					}
 					
 					break;
@@ -243,6 +244,7 @@ module.exports = {
 			//Match.update(this.id, this.toJSON());
 	
 			log.verbose('Pause resume match: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
+
 			return this.matchStatus;
 		},
 
@@ -359,7 +361,7 @@ module.exports = {
 				io.in(this.id).emit('pausetime', {ms:0});
 			}
 			*/
-			log.verbose('Reseting Match ' + this.toString());
+			log.match('Reseting Match ' + this.toString());
 
 			this.round = 1;
 			this.player1Points = 0;
@@ -440,7 +442,7 @@ module.exports = {
 					judgeIsInList = true;
 					return;
 				}
-			})
+			});
 
 			if(!judgeIsInList) {
 				log.error('Device ' + source + ' is not registered for match ' + this.match);
@@ -479,7 +481,7 @@ module.exports = {
 							
 							//// how votes for each score (1-4)
 							scoreCount[pointsObj.points] += 1;
-						})
+						});
 						
 						/// Set the score to be awarded as the lowest value given (just in case they don't all agree - but enough have voted at least 1 point
 						aggregatePoints = low;
@@ -491,14 +493,14 @@ module.exports = {
 							if(count >= agree && points > aggregatePoints) {
 								aggregatePoints = points;
 							}
-						})
+						});
 
 						
 					}
 
 					match.points(player, aggregatePoints);
 
-					log.debug(player + ' awarded ' + aggregatePoints + ' points');
+					log.match(player + ' awarded ' + aggregatePoints + ' points');
 
 					scoreBuffer[id][player] = [];
 				}, scoreTimeout);
@@ -509,7 +511,7 @@ module.exports = {
 			// Push the score into the vote buffer
 			if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
 				scoreBuffer[id][player].push({source: source, points: points});
-				log.verbose(source + ' voted player' + player + ' ' + points + ' points');
+				log.match(source + ' voted player' + player + ' ' + points + ' points');
 			
 			} else {
 				//Check if the source already exist in array? if not, add the data
@@ -524,7 +526,7 @@ module.exports = {
 				// if the judge has not already cast a vote - add this judges score to the buffer
 				if(!alreadyGotIt) {
 					scoreBuffer[id][player].push({source: source, points: points});
-				 	log.verbose(source + ' voted player' + player + ' ' + points + ' points');
+				 	log.match(source + ' voted player' + player + ' ' + points + ' points');
 				}
 			}
 			

@@ -69,6 +69,7 @@ module.exports = {
 
 	status: function(req,res,next)
 	{
+		/*
 		if(req.session.authority) {
 			log.silly(req.connection.remoteAddress + ' is requesting logged in status - Granted ' + req.session.user);
 			return res.ok({
@@ -81,6 +82,12 @@ module.exports = {
 				session: req.session,
 			});
 		}
+		*/
+		log.silly(req.connection.remoteAddress + ' is requesting logged in status - ANON GRANT');
+		return res.ok({
+			session: req.session,
+		});
+		
 	},
 
 
