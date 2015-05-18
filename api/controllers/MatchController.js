@@ -58,7 +58,7 @@ module.exports = {
 	registerScore: function(req, res, next) {
 		var id = req.param('id');
 
-		var source = req.session.id;
+		var source = req.session.ident;
 		var data = {
 			source: source,
 			player: req.param('player'),
@@ -72,8 +72,10 @@ module.exports = {
 	},
 
 	registerJudge: function (req, res, next) {
-		var identifier = req.session.id;
-		console.log(identifier);
+
+		var identifier = req.session.ident;
+		//console.log(identifier);
+		
 		var id = req.param('id');
 		Match.registerJudge(id, identifier, function(err, match) {
 			if(err) {return log.error(err);}

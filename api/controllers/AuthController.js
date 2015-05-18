@@ -83,7 +83,23 @@ module.exports = {
 			});
 		}
 		*/
-		log.silly(req.connection.remoteAddress + ' is requesting logged in status - ANON GRANT');
+		log.debug(req.connection.remoteAddress + ' is requesting logged in status - ANON GRANT');
+		
+		function randomIdent(length) {
+            var text = "";
+            
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            for( var i=0; i < length; i++ )
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            
+            return text;
+        };
+
+        if(!req.session.ident) {
+        	req.session.ident = randomIdent(12);
+        }
+
 		return res.ok({
 			session: req.session,
 		});

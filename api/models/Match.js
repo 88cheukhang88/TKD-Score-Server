@@ -142,7 +142,7 @@ module.exports = {
 
 			var judge = false;
 			var noJudge = false;
-			_.forEach(judges, function(judgeSource, key) {
+			_.forEachRight(judges, function(judgeSource, key) {
 				if(judgeSource === identifier) {
 					judge = false;
 					noJudge = true;
