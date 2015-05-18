@@ -1,7 +1,7 @@
 
 // Code based on: https://gist.github.com/Mantish/6366642
 
-var bcrypt = require('bcrypt');
+//var bcrypt = require('bcrypt');
 var log = sails.log;
 
 

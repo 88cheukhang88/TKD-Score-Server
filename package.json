@@ -1,11 +1,10 @@
 {
-  "name": "qtimeback",
+  "name": "tkdscoreserver",
   "private": true,
   "version": "0.0.0",
   "description": "a Sails application",
   "keywords": [],
   "dependencies": {
-    "bcrypt": "^0.8.0",
     "connect-mongo": "^0.4.1",
     "connect-redis": "^1.4.5",
     "ejs": "~0.8.4",
