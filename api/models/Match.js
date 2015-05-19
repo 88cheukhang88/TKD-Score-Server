@@ -130,8 +130,18 @@ module.exports = {
 			return '[match] ' + this.player1 + ' vs. ' + this.player2;
 		},
 
+		getJudgeArray: function() {
+			var judges = [
+				this.judge1,
+				this.judge2,
+				this.judge3,
+				this.judge4,
+			];
+			return judges;
+		},
 
-		registerJudge: function(identifier) {
+
+		registerJudge: function(identifier, cb) {
 			// For judge pressed indicators
 			var judges = [
 				this.judge1,
@@ -172,11 +182,11 @@ module.exports = {
 						this.judge4 = identifier;
 						break;
 				}
-				this.save();
+				this.save(cb);
 			}
 		},
 
-		removeJudge: function(num) {
+		removeJudge: function(num, cb) {
 			switch(num) {
 				case 1:
 					this.judge1 = "";
@@ -191,12 +201,12 @@ module.exports = {
 					this.judge4 = "";
 					break;
 			}
-			this.save();
+			this.save(cb);
 		},
 
 
 
-		pauseResume: function () {
+		pauseResume: function (cb) {
 			MatchService.createTimers(this);
 			
 			var oldStatus = this.matchStatus;
@@ -240,15 +250,15 @@ module.exports = {
 					break;
 			}
 
-			this.save();
+			this.save(cb);
 			//Match.update(this.id, this.toJSON());
 	
 			log.verbose('Pause resume match: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
 
-			return this.matchStatus;
+			
 		},
 
-		points: function (player, points) {
+		points: function (player, points, cb) {
 			var playerPoints = 0;
 			var playerPenalties = 0;
 
@@ -263,8 +273,6 @@ module.exports = {
 			playerPoints += points;
 			if (playerPoints < 0) {playerPoints = 0;}
 
-
-
 			if(player === 1) {
 				this.player1Points = playerPoints;
 				this.player1Penalies = playerPenalties;
@@ -278,11 +286,14 @@ module.exports = {
 				Match.completeMatch(this);
 			}
 
-			this.save();
+			var playerString = (player === 1) ? this.player1 : this.player2;
+
+			log.match(this.toString() + ': ' + playerString + ' awarded ' + points + ' points');
+			this.save(cb);
 		},
 
 
-		changeRound: function (round) {
+		changeRound: function (round, cb) {
 			if(this.matchStatus === "break" && breakTimer[this.id].ms > breakTimer[this.id].almostDoneMS) {
 				this.matchStatus = '_endbreakearly';
 				this.pauseResume();
@@ -296,12 +307,12 @@ module.exports = {
 				}
 
 				this.round = round;
-				this.save();
+				this.save(cb);
 			}
 
 		},
 
-		penalties: function (player, penalties) {
+		penalties: function (player, penalties, cb) {
 			var opposingPlayerPoints = 0;
 			var playerPenalties = 0;
 			if(player === 1) {
@@ -336,10 +347,10 @@ module.exports = {
 				this.player1Points = opposingPlayerPoints;
 				this.player2Penalties = playerPenalties;
 			}
-			this.save();
+			this.save(cb);
 		},
 
-		resetMatch: function () {
+		resetMatch: function (cb) {
 			MatchService.createTimers(this);
 
 			MatchService.roundTimer[this.id].reset(this.roundLengthMS);
@@ -369,23 +380,26 @@ module.exports = {
 			this.player1Penalties = 0;
 			this.player2Penalties = 0;
 			this.matchStatus = 'pending';
-			this.save();
+			this.save(cb);
 		},
 
-		resetTimer: function () {
+		resetTimer: function (cb) {
 			MatchService.createTimers(this);
 			switch(this.matchStatus) {
 				case 'round':
 				case 'pausedround':
 					MatchService.roundTimer[this.id].reset();
 					MatchService.pauseWatch[this.id].start();
+					this.roundTimeMS = MatchService.roundTimer[this.id].ms;
 					break;
 				case 'break':
 				case 'pausedbreak':
 					MatchService.breakTimer[this.id].reset();
 					MatchService.pauseWatch[this.id].start();
+					this.breakTimeMS = MatchService.breakTimer[this.id].ms;
 					break;
 			}
+			this.save(cb);
 		},
 
 		getRoundTimer: function () {
@@ -403,15 +417,9 @@ module.exports = {
 			return pauseWatch[this.id];
 		},
 
-		registerScore: function(data, cb) {
+		registerScore: function(data) {
 
-			///// Used for corner judges only
-			var judges = [
-				this.judge1,
-				this.judge2,
-				this.judge3,
-				this.judge4,
-			];
+			
 
 			var points_table = [
 				{turning: true, target:'head', points: this.pointsHeadTurning},
@@ -427,7 +435,7 @@ module.exports = {
 			var turning = data.turning || false;
 
 			var points = _.result(_.find(points_table, {turning:turning, target:target}), 'points');
-
+			data.points = points;
 			var source = data.source;
 			var aggregatePoints = 0;
 			
@@ -435,6 +443,7 @@ module.exports = {
 			var scoreTimeout = match.scoreTimeout;
 			var agree = match.agree;
 
+			var judges = this.getJudgeArray();
 			var judgeIsInList = false;
 
 			_.forEach(judges, function(judge) {
@@ -460,8 +469,6 @@ module.exports = {
 			if(!scoreTimer[id]) {
 				scoreTimer[id] = [];
 			}
-
-
 
 
 			if(scoreBuffer[id][player].length === 0) { // no score is present (the timer will not be running)
@@ -497,21 +504,27 @@ module.exports = {
 
 						
 					}
-
-					match.points(player, aggregatePoints);
-
-					log.match(player + ' awarded ' + aggregatePoints + ' points');
+					
 
 					scoreBuffer[id][player] = [];
+
+					//match.points(player, aggregatePoints);
+					// CAN'T USE the 'match' var here - it's the match from a second ago!
+					// Get it from the db again to be sure we are up to date!!!!!
+					Match.points(match.id,player,aggregatePoints, function(err, updatedMatch) {
+						match = updatedMatch;
+					});
+					
 				}, scoreTimeout);
 			}
 
 
-
+			var playerString = (player === 1) ? this.player1 : this.player2;
 			// Push the score into the vote buffer
 			if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
 				scoreBuffer[id][player].push({source: source, points: points});
-				log.match(source + ' voted player' + player + ' ' + points + ' points');
+				
+				log.match(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
 			
 			} else {
 				//Check if the source already exist in array? if not, add the data
@@ -526,23 +539,12 @@ module.exports = {
 				// if the judge has not already cast a vote - add this judges score to the buffer
 				if(!alreadyGotIt) {
 					scoreBuffer[id][player].push({source: source, points: points});
-				 	log.match(source + ' voted player' + player + ' ' + points + ' points');
+				
+				 	log.match(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
 				}
 			}
+			return data; // Return modified data... namely adds the points property
 			
-			// For judge pressed indicators
-			
-
-
-			var judge = false;
-			_.forEach(judges, function(judgeSource, key) {
-				if(judgeSource === source) {
-					judge = key + 1;
-					return;
-				}
-			});
-
-			Match.sendmessage(this.id, 'judge', {source: source, points: points, target: target, turning: turning, player:player, judge: judge});
 
 		}
 	},
@@ -629,8 +631,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.pauseResume();
- 			cb(null, match);
+			match.pauseResume(cb); 
 		});
 	},
 
@@ -640,8 +641,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.resetMatch();
-			cb(null, match);
+			match.resetMatch(cb);
 		});
 	},
 
@@ -651,8 +651,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.resetTimer();
-			cb(null, match);
+			match.resetTimer(cb);
 		});
 	},
 
@@ -661,8 +660,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.points(player, points);
-			cb(null, match);
+			match.points(player, points, cb);
 		});
 	},
 
@@ -671,8 +669,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.changeRound(value);
-			if(cb) {cb(null, match);}
+			match.changeRound(value, cb);
 		});
 	},
 
@@ -681,8 +678,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.penalties(player, points);
-			cb(null, match);
+			match.penalties(player, points, cb);
 		});
 	},
 
@@ -691,8 +687,9 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.registerScore(data);
-			cb(null, match);
+			var newData = match.registerScore(data);
+			newData.match = match;
+			cb(null, newData);
 		});
 	},
 
@@ -725,8 +722,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.registerJudge(indentifier);
-			cb(null, match);
+			match.registerJudge(indentifier, cb);
 		});
 	},
 
@@ -735,8 +731,7 @@ module.exports = {
 			if(err) {return cb(err);}
 			if(!match) {return cb(null, null);}
 
-			match.removeJudge(num);
-			cb(null, match);
+			match.removeJudge(num, cb);
 		});
 	},
 

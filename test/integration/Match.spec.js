@@ -98,8 +98,11 @@ describe('Match Model', function() {
 				}, 100);
 
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(2);
-					done();
+					// Register score may blindly update the points - we need to re-get the reference to test
+					Match.findOne(match.id).exec(function(err, updatedMatch) {
+						expect(updatedMatch.player1Points).to.equal(2);
+						done();
+					});
 				}, 250);
 			});
 		});
@@ -138,8 +141,12 @@ describe('Match Model', function() {
 				}, 100);
 
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(1);
-					done();
+					// Register score may blindly update the points - we need to re-get the reference to test
+					Match.findOne(match.id).exec(function(err, updatedMatch) {
+						expect(updatedMatch.player1Points).to.equal(1);
+						done();
+					});
+				
 				}, 250);
 			});
 		});
@@ -177,8 +184,11 @@ describe('Match Model', function() {
 				}, 250);
 
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(0);
-					done();
+					// Register score may blindly update the points - we need to re-get the reference to test
+					Match.findOne(match.id).exec(function(err, updatedMatch) {
+						expect(updatedMatch.player1Points).to.equal(0);
+						done();
+					});
 				}, 300);
 			});
 		});

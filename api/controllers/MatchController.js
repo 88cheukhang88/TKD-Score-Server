@@ -66,8 +66,21 @@ module.exports = {
 			turning: req.param('turning'),
 		};
 
-		Match.registerScore(id, data, function(err, match) {
+		Match.registerScore(id, data, function(err, newData) {
 			if(err) {return log.error(err);}
+
+
+			// For judge pressed indicators
+			var judges = newData.match.getJudgeArray();
+
+			var judge = false;
+			_.forEach(judges, function(judgeSource, key) {
+				if(judgeSource === source) {
+					judge = key + 1;
+					return;
+				}
+			});
+			Match.sendmessage(newData.match.id, 'judge', {source: newData.source, points: newData.points, target: newData.target, turning: data.turning, player:newData.player, judge: judge});
 		});
 	},
 

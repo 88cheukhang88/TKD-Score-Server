@@ -19,6 +19,18 @@ var logoutFlash = {
 	summary: 'You have been logged out',
 };
 
+function randomIdent(length) {
+    var text = "";
+    
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < length; i++ ) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    
+    return text;
+}
+
 
 
 module.exports = { 
@@ -85,16 +97,6 @@ module.exports = {
 		*/
 		log.debug(req.connection.remoteAddress + ' is requesting logged in status - ANON GRANT');
 		
-		function randomIdent(length) {
-            var text = "";
-            
-            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-            for( var i=0; i < length; i++ )
-                text += possible.charAt(Math.floor(Math.random() * possible.length));
-            
-            return text;
-        };
 
         if(!req.session.ident) {
         	req.session.ident = randomIdent(12);
