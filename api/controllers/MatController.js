@@ -2,7 +2,7 @@ module.exports = {
 	pauseResume: function(req, res, next) {
 		var id = req.param('id');
 		
-		Match.pauseResumeMatch(id, function(err, match) {
+		Mat.pauseResumeMatch(id, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
@@ -12,7 +12,7 @@ module.exports = {
 		var id = req.param('id');
 		var player = req.param('player');
 		var points = req.param('points');
-		Match.points(id, player, points, function(err, match) {
+		Mat.points(id, player, points, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
@@ -21,7 +21,7 @@ module.exports = {
 		var id = req.param('id');
 		var value = req.param('value');
 		
-		Match.changeRound(id, value, function(err, match) {
+		Mat.changeRound(id, value, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
@@ -30,29 +30,29 @@ module.exports = {
 		var id = req.param('id');
 		var player = req.param('player');
 		var points = req.param('points');
-		Match.penalties(id, player, points, function(err, match) {
+		Mat.penalties(id, player, points, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
 
 	resetTimer: function(req, res, next) {
 		var id = req.param('id');
-		Match.resetTimer(id, function(err, match) {
+		Mat.resetTimer(id, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
 
-	resetMatch: function(req, res, next) {
+	resetMat: function(req, res, next) {
 		var id = req.param('id');
 
-		Match.resetMatch(id, function(err, match) {
+		Mat.resetMatch(id, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
 
 	soundHorn: function(req, res, next) {
 		var id = req.param('id');
-		Match.soundhorn(id);
+		Mat.soundhorn(id);
 	},
 
 	registerScore: function(req, res, next) {
@@ -66,12 +66,12 @@ module.exports = {
 			turning: req.param('turning'),
 		};
 
-		Match.registerScore(id, data, function(err, newData) {
+		Mat.registerScore(id, data, function(err, newData) {
 			if(err) {return log.error(err);}
 
 
 			// For judge pressed indicators
-			var judges = newData.match.getJudgeArray();
+			var judges = newData.mat.getJudgeArray();
 
 			var judge = false;
 			_.forEach(judges, function(judgeSource, key) {
@@ -80,7 +80,7 @@ module.exports = {
 					return;
 				}
 			});
-			Match.sendmessage(newData.match.id, 'judge', {source: newData.source, points: newData.points, target: newData.target, turning: data.turning, player:newData.player, judge: judge});
+			Mat.sendmessage(newData.mat.id, 'judge', {source: newData.source, points: newData.points, target: newData.target, turning: data.turning, player:newData.player, judge: judge});
 		});
 	},
 
@@ -90,7 +90,7 @@ module.exports = {
 		//console.log(identifier);
 		
 		var id = req.param('id');
-		Match.registerJudge(id, identifier, function(err, match) {
+		Mat.registerJudge(id, identifier, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},
@@ -98,7 +98,7 @@ module.exports = {
 	removeJudge: function(req, res, next) {
 		var num = req.param('judge');
 		var id = req.param('id');
-		Match.removeJudge(id, num, function(err, match) {
+		Mat.removeJudge(id, num, function(err, mat) {
 			if(err) {return log.error(err);}
 		});
 	},

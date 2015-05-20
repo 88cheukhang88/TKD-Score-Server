@@ -1,6 +1,6 @@
 var testData = require('./_testData.js');
 
-describe('Match Model', function() {
+describe('Mat Model', function() {
 
 	
 
@@ -8,17 +8,17 @@ describe('Match Model', function() {
 		testData.afterEach();
 
 	it('should add points to player scores', function(done) {
-		Match.create({}).exec(function(err, match) {
+		Mat.create({}).exec(function(err, mat) {
 			if(err) {
 				throw new Error(err);
 			}
-			expect(match.player1Points).to.equal(0);
-			match.points(1, 3);
-			expect(match.player1Points).to.equal(3);
-			match.points(2, 1);
-			match.points(1, 2);
-			expect(match.player1Points).to.equal(5);
-			expect(match.player2Points).to.equal(1);
+			expect(mat.player1Points).to.equal(0);
+			mat.points(1, 3);
+			expect(mat.player1Points).to.equal(3);
+			mat.points(2, 1);
+			mat.points(1, 2);
+			expect(mat.player1Points).to.equal(5);
+			expect(mat.player2Points).to.equal(1);
 			done();
 		});
 
@@ -26,42 +26,42 @@ describe('Match Model', function() {
 	});
 
 	it('should add points to player penalties', function(done) {
-		Match.create().exec(function(err, match) {
-			expect(match.player1Penalties).to.equal(0);
-			match.penalties(1, 3);
-			expect(match.player1Penalties).to.equal(3);
-			match.penalties(2, 1);
-			match.penalties(1, 2);
-			expect(match.player1Penalties).to.equal(5);
-			expect(match.player2Penalties).to.equal(1);
+		Mat.create().exec(function(err, mat) {
+			expect(mat.player1Penalties).to.equal(0);
+			mat.penalties(1, 3);
+			expect(mat.player1Penalties).to.equal(3);
+			mat.penalties(2, 1);
+			mat.penalties(1, 2);
+			expect(mat.player1Penalties).to.equal(5);
+			expect(mat.player2Penalties).to.equal(1);
 			done();
 		});
 	});
 
 	it('should add an opposing point on full penalty', function(done) {
-		Match.create().exec(function(err, match) {
-			expect(match.player1Penalties).to.equal(0);
-			expect(match.player2Points).to.equal(0);
-			match.penalties(1, 2);
-			expect(match.player1Penalties).to.equal(2);
-			expect(match.player2Points).to.equal(1);
+		Mat.create().exec(function(err, mat) {
+			expect(mat.player1Penalties).to.equal(0);
+			expect(mat.player2Points).to.equal(0);
+			mat.penalties(1, 2);
+			expect(mat.player1Penalties).to.equal(2);
+			expect(mat.player2Points).to.equal(1);
 			done();
 		});
 	});
 
 	it('should minus an opposing point if the penalty is dropped', function(done) {
-		Match.create().exec(function(err, match) {
-			//match.penalties(1, 2);
-			match.player1Penalties = 2;
-			match.player2Points = 1;
-			match.penalties(1, -1);
-			expect(match.player1Penalties).to.equal(1);
-			expect(match.player2Points).to.equal(0);
+		Mat.create().exec(function(err, mat) {
+			//mat.penalties(1, 2);
+			mat.player1Penalties = 2;
+			mat.player2Points = 1;
+			mat.penalties(1, -1);
+			expect(mat.player1Penalties).to.equal(1);
+			expect(mat.player2Points).to.equal(0);
 			done();
 		});
 	});
 
-	describe('Match Scoring', function() {
+	describe('Mat Scoring', function() {
 
 		it('should correctly assess 2 judge scoring 2 points (= 2 points)', function(done) {
 			var record = {
@@ -75,9 +75,9 @@ describe('Match Model', function() {
 				pointsHeadTurning: 4,
 			};
 
-			Match.create(record).exec(function(err, match) {
+			Mat.create(record).exec(function(err, mat) {
 
-				match.registerScore({
+				mat.registerScore({
 					source:'10101',
 					player:1,
 					target:'body',
@@ -85,11 +85,11 @@ describe('Match Model', function() {
 				});
 
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(0);
+					expect(mat.player1Points).to.equal(0);
 				}, 50);
 
 				setTimeout(function() {
-					match.registerScore({
+					mat.registerScore({
 						source:'10102',
 						player:1,
 						target:'body',
@@ -99,7 +99,7 @@ describe('Match Model', function() {
 
 				setTimeout(function() {
 					// Register score may blindly update the points - we need to re-get the reference to test
-					Match.findOne(match.id).exec(function(err, updatedMatch) {
+					Mat.findOne(mat.id).exec(function(err, updatedMatch) {
 						expect(updatedMatch.player1Points).to.equal(2);
 						done();
 					});
@@ -119,20 +119,20 @@ describe('Match Model', function() {
 				pointsHeadTurning: 4,
 			};
 
-			Match.create(record).exec(function(err, match) {
+			Mat.create(record).exec(function(err, mat) {
 
-				match.registerScore({
+				mat.registerScore({
 					source:'10101',
 					player:1,
 					target:'body',
 					turning: true,
 				});
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(0);
+					expect(mat.player1Points).to.equal(0);
 				}, 50);
 
 				setTimeout(function() {
-					match.registerScore({
+					mat.registerScore({
 						source:'10102',
 						player:1,
 						target:'body',
@@ -142,7 +142,7 @@ describe('Match Model', function() {
 
 				setTimeout(function() {
 					// Register score may blindly update the points - we need to re-get the reference to test
-					Match.findOne(match.id).exec(function(err, updatedMatch) {
+					Mat.findOne(mat.id).exec(function(err, updatedMatch) {
 						expect(updatedMatch.player1Points).to.equal(1);
 						done();
 					});
@@ -163,19 +163,19 @@ describe('Match Model', function() {
 				pointsHeadTurning: 4,
 			};
 
-			Match.create(record).exec(function(err, match) {
-				match.registerScore({
+			Mat.create(record).exec(function(err, mat) {
+				mat.registerScore({
 					source:'10101',
 					player:1,
 					target:'head',
 					turning: false,
 				});
 				setTimeout(function() {
-					expect(match.player1Points).to.equal(0);
+					expect(mat.player1Points).to.equal(0);
 				}, 50);
 
 				setTimeout(function() {
-					match.registerScore({
+					mat.registerScore({
 						source:'10102',
 						player:1,
 						target:'head',
@@ -185,7 +185,7 @@ describe('Match Model', function() {
 
 				setTimeout(function() {
 					// Register score may blindly update the points - we need to re-get the reference to test
-					Match.findOne(match.id).exec(function(err, updatedMatch) {
+					Mat.findOne(mat.id).exec(function(err, updatedMatch) {
 						expect(updatedMatch.player1Points).to.equal(0);
 						done();
 					});
@@ -199,32 +199,32 @@ describe('Match Model', function() {
 	
 });
 
-describe('Match timers and clocks', function() {
+describe('Mat timers and clocks', function() {
 	testData.beforeEach();
 	testData.afterEach();
 
 
 	it('should countdown, pause, then continue', function(done) {
 
-		Match.create({}).exec(function(err, match) {
+		Mat.create({}).exec(function(err, mat) {
 
-			var startTime = match.getRoundTimer().ms;
+			var startTime = mat.getRoundTimer().ms;
 			var splittime = 0;
-			match.pauseResume();
+			mat.pauseResume();
 			setTimeout(function(){
-				match.pauseResume();
-				splittime = match.getRoundTimer().ms;
+				mat.pauseResume();
+				splittime = mat.getRoundTimer().ms;
 				expect(splittime).to.be.below(startTime);
 			}, 60);
 
 			setTimeout(function(){
-				expect(splittime).to.be(match.getRoundTimer().ms);
-				match.pauseResume();
+				expect(splittime).to.be(mat.getRoundTimer().ms);
+				mat.pauseResume();
 			}, 80);
 
 			setTimeout(function(){
-				match.pauseResume();
-				expect(match.getRoundTimer().ms).to.be.below(splittime);
+				mat.pauseResume();
+				expect(mat.getRoundTimer().ms).to.be.below(splittime);
 				done();
 			}, 120);
 		});
@@ -232,11 +232,11 @@ describe('Match timers and clocks', function() {
 
 
 
-	it('should have independant control over different matches', function(done) {
-		Match.create([{},{}]).exec(function(err, matches) {
+	it('should have independant control over different mats', function(done) {
+		Mat.create([{},{}]).exec(function(err, mats) {
 
-			var testMatch = matches[0];
-			var testMatch2 = matches[1];
+			var testMatch = mats[0];
+			var testMatch2 = mats[1];
 			
 			testMatch2.getRoundTimer().start();
 			setTimeout(function(){
@@ -268,7 +268,7 @@ describe('Match timers and clocks', function() {
 
 
 
-describe('Match Auto Operations', function() {
+describe('Mat Auto Operations', function() {
 	testData.beforeEach();
 	testData.afterEach();
 
@@ -279,52 +279,52 @@ describe('Match Auto Operations', function() {
 			breakLengthMS: 500,
 		};
 
-		Match.create(record).exec(function(err, match) {
+		Mat.create(record).exec(function(err, mat) {
 		
 			setTimeout(function() {
-				match.resetMatch();
-				match.player1Points = 2; // ensure we do not go to sudden death
-				match.save();
-				match.pauseResume();
+				mat.resetMatch();
+				mat.player1Points = 2; // ensure we do not go to sudden death
+				mat.save();
+				mat.pauseResume();
 				
 			}, 100);
 			
 			setTimeout(function() {
-				expect(match.round).to.equal(1);
+				expect(mat.round).to.equal(1);
 			}, 400); // in R1
 
 			setTimeout(function() {
-				expect(match.player1Points).to.equal(2);
-				expect(match.round).to.equal(2);
+				expect(mat.player1Points).to.equal(2);
+				expect(mat.round).to.equal(2);
 			}, 900); // in R1 break
 
 			setTimeout(function() { // coming out of R2 break, for some reason roundTimer done is fired stright away
-				expect(match.matchStatus).to.be('pausedround');
-				expect(match.round).to.equal(2);
-				match.pauseResume();
-				expect(match.round).to.equal(2);
+				expect(mat.matchStatus).to.be('pausedround');
+				expect(mat.round).to.equal(2);
+				mat.pauseResume();
+				expect(mat.round).to.equal(2);
 				
 			}, 1300); // end of break
 
 			setTimeout(function() {
-				expect(match.round).to.equal(2);
+				expect(mat.round).to.equal(2);
 			}, 1600); // In R2
 
 			setTimeout(function() {
-				expect(match.matchStatus).to.be('pausedround');
-				match.pauseResume();
+				expect(mat.matchStatus).to.be('pausedround');
+				mat.pauseResume();
 				
 			}, 2500); // end if break
 
 			setTimeout(function() {
-				expect(match.round).to.equal(3);
+				expect(mat.round).to.equal(3);
 			}, 2800); // in R3
 
 			setTimeout(function() {
-				expect(match.round).to.equal(3);
-				expect(match.matchStatus).to.equal('complete');
+				expect(mat.round).to.equal(3);
+				expect(mat.matchStatus).to.equal('complete');
 				done();
-			}, 3200); // End of Match
+			}, 3200); // End of Mat
 		});
 	});
 
@@ -335,16 +335,16 @@ describe('Match Auto Operations', function() {
 
 
 
-describe('Match Route', function() {
+describe('Mat Route', function() {
 
 	testData.beforeEach();
 	testData.afterEach();
 
 
-	it('POST /match should create and return a new match', function(done) {
+	it('POST /mat should create and return a new mat', function(done) {
 		sails.request({
 			method: 'post',
-			url: '/api/match/',
+			url: '/api/mat/',
 			params: {
 				//limit: 10,
 				//sort: 'number ASC',
@@ -364,10 +364,10 @@ describe('Match Route', function() {
 
 
 
-	it('GET /match/id should return the match', function(done) {
+	it('GET /mat/id should return the mat', function(done) {
 		sails.request({
 			method: 'get',
-			url: '/api/match/' + testData.matches[0].id,
+			url: '/api/mat/' + testData.mats[0].id,
 			params: {
 				//limit: 10,
 				//sort: 'number ASC',
@@ -375,7 +375,7 @@ describe('Match Route', function() {
 		}, function (err, clientRes, body) {
 			if (err) {return done(err);}
 			expect(clientRes.statusCode).to.equal(200);
-			expect(body.id).to.equal(testData.matches[0].id);
+			expect(body.id).to.equal(testData.mats[0].id);
 			return done();
 		});
 
@@ -383,11 +383,11 @@ describe('Match Route', function() {
 	});
 
 
-	it('GET /match/ should return a list of matches', function(done) {
+	it('GET /mat/ should return a list of mats', function(done) {
 		
 		sails.request({
 			method: 'get',
-			url: '/api/match/',
+			url: '/api/mat/',
 			params: {
 				//limit: 10,
 				//sort: 'number ASC',
@@ -396,7 +396,7 @@ describe('Match Route', function() {
 			if (err) {return done(err);}
 			expect(clientRes.statusCode).to.equal(200);
 			expect(body.length).to.equal(2);
-			expect(body[0].id).to.equal(testData.matches[0].id);
+			expect(body[0].id).to.equal(testData.mats[0].id);
 			return done();
 		});
 
@@ -405,10 +405,10 @@ describe('Match Route', function() {
 
 
 
-	it('PUT /match/id should update the match', function(done) {
+	it('PUT /mat/id should update the mat', function(done) {
 		sails.request({
 			method: 'put',
-			url: '/api/match/' + testData.matches[0].id,
+			url: '/api/mat/' + testData.mats[0].id,
 			params: {
 				//limit: 10,
 				//sort: 'number ASC',

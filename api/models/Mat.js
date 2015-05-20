@@ -127,7 +127,7 @@ module.exports = {
 
 
 		toString: function() {
-			return '[match] ' + this.player1 + ' vs. ' + this.player2;
+			return '[mat] ' + this.player1 + ' vs. ' + this.player2;
 		},
 
 		getJudgeArray: function() {
@@ -164,7 +164,7 @@ module.exports = {
 				}
 			});
 
-			log.match('Registering Judge ' + identifier + ' into slot ' + judge);
+			log.mat('Registering Judge ' + identifier + ' into slot ' + judge);
 			
 			if(judge !== false) {
 			
@@ -207,22 +207,22 @@ module.exports = {
 
 
 		pauseResume: function (cb) {
-			MatchService.createTimers(this);
+			MatService.createTimers(this);
 			
 			var oldStatus = this.matchStatus;
 			switch(this.matchStatus) {
 				case 'round':
 				case 'suddendeath':
-					MatchService.roundTimer[this.id].stop();
-					MatchService.pauseWatch[this.id].start();
+					MatService.roundTimer[this.id].stop();
+					MatService.pauseWatch[this.id].start();
 					this.matchStatus = 'pausedround';
 					break;
 					
 				case 'break': // only pause break if the bell has not sounded. Otherwise start the round
-					if (MatchService.breakTimer[this.id].ms > MatchService.breakTimer[this.id].almostDoneMS) {
-						MatchService.breakTimer[this.id].stop();
-						this.breakTimeMS = MatchService.breakTimer[this.id].ms;
-						MatchService.pauseWatch[this.id].start();
+					if (MatService.breakTimer[this.id].ms > MatService.breakTimer[this.id].almostDoneMS) {
+						MatService.breakTimer[this.id].stop();
+						this.breakTimeMS = MatService.breakTimer[this.id].ms;
+						MatService.pauseWatch[this.id].start();
 						this.matchStatus = 'pausedbreak';
 						break;
 					} 	
@@ -230,10 +230,10 @@ module.exports = {
 				case '_endbreakearly':	// internal use to force the break to end
 				case 'pausedround':
 				case 'pending':
-					MatchService.breakTimer[this.id].reset();
-					MatchService.pauseWatch[this.id].reset();
-					MatchService.breakTimer[this.id].reset();
-					MatchService.roundTimer[this.id].start();
+					MatService.breakTimer[this.id].reset();
+					MatService.pauseWatch[this.id].reset();
+					MatService.breakTimer[this.id].reset();
+					MatService.roundTimer[this.id].start();
 					if(this.round > this.numberOfRounds) {
 						this.matchStatus = 'suddendeath';
 					} else {
@@ -244,16 +244,16 @@ module.exports = {
 					break;
 				case 'pausedbreak':
 
-					MatchService.pauseWatch[this.id].reset();
-					MatchService.breakTimer[this.id].start();
+					MatService.pauseWatch[this.id].reset();
+					MatService.breakTimer[this.id].start();
 					this.matchStatus = 'break';
 					break;
 			}
 
 			this.save(cb);
-			//Match.update(this.id, this.toJSON());
+			//Mat.update(this.id, this.toJSON());
 	
-			log.verbose('Pause resume match: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
+			log.verbose('Pause resume mat: ' + this.id + '. Status old: ' + oldStatus + ' now: ' + this.matchStatus);
 
 			
 		},
@@ -282,13 +282,13 @@ module.exports = {
 			}
 
 			if(this.round > this.numberOfRounds) { // is sudden death
-				MatchService.roundTimer[this.id].stop();
-				Match.completeMatch(this);
+				MatService.roundTimer[this.id].stop();
+				Mat.completeMatch(this);
 			}
 
 			var playerString = (player === 1) ? this.player1 : this.player2;
 
-			log.match(this.toString() + ': ' + playerString + ' awarded ' + points + ' points');
+			log.mat(this.toString() + ': ' + playerString + ' awarded ' + points + ' points');
 			this.save(cb);
 		},
 
@@ -351,20 +351,20 @@ module.exports = {
 		},
 
 		resetMatch: function (cb) {
-			MatchService.createTimers(this);
+			MatService.createTimers(this);
 
-			MatchService.roundTimer[this.id].reset(this.roundLengthMS);
+			MatService.roundTimer[this.id].reset(this.roundLengthMS);
 			this.roundTimeMS = this.roundLengthMS;
 			
-			Match.sendmessage(this.id, 'roundtime', {ms:this.roundTimeMS});
+			Mat.sendmessage(this.id, 'roundtime', {ms:this.roundTimeMS});
 			
 
-			MatchService.breakTimer[this.id].reset(this.breakLengthMS);
+			MatService.breakTimer[this.id].reset(this.breakLengthMS);
 			
 			this.breakTimeMS = this.breakLengthMS;
-			MatchService.pauseWatch[this.id].reset();
+			MatService.pauseWatch[this.id].reset();
 
-			/*   // we send the whole match in the this.save()
+			/*   // we send the whole mat in the this.save()
 			if(io) {
 				io.in(this.id).emit('breaktime', {ms:this.breakTimeMS});
 			}
@@ -372,7 +372,7 @@ module.exports = {
 				io.in(this.id).emit('pausetime', {ms:0});
 			}
 			*/
-			log.match('Reseting Match ' + this.toString());
+			log.mat('Reseting Mat ' + this.toString());
 
 			this.round = 1;
 			this.player1Points = 0;
@@ -384,36 +384,36 @@ module.exports = {
 		},
 
 		resetTimer: function (cb) {
-			MatchService.createTimers(this);
+			MatService.createTimers(this);
 			switch(this.matchStatus) {
 				case 'round':
 				case 'pausedround':
-					MatchService.roundTimer[this.id].reset();
-					MatchService.pauseWatch[this.id].start();
-					this.roundTimeMS = MatchService.roundTimer[this.id].ms;
+					MatService.roundTimer[this.id].reset();
+					MatService.pauseWatch[this.id].start();
+					this.roundTimeMS = MatService.roundTimer[this.id].ms;
 					break;
 				case 'break':
 				case 'pausedbreak':
-					MatchService.breakTimer[this.id].reset();
-					MatchService.pauseWatch[this.id].start();
-					this.breakTimeMS = MatchService.breakTimer[this.id].ms;
+					MatService.breakTimer[this.id].reset();
+					MatService.pauseWatch[this.id].start();
+					this.breakTimeMS = MatService.breakTimer[this.id].ms;
 					break;
 			}
 			this.save(cb);
 		},
 
 		getRoundTimer: function () {
-			MatchService.createTimers(this);
-			return MatchService.roundTimer[this.id];
+			MatService.createTimers(this);
+			return MatService.roundTimer[this.id];
 		},
 
 		getBreakTimer: function () {
-			MatchService.createTimers(this);
+			MatService.createTimers(this);
 			return breakTimer[this.id];
 		},
 
 		getPauseWatch: function () {
-			MatchService.createTimers(this);
+			MatService.createTimers(this);
 			return pauseWatch[this.id];
 		},
 
@@ -428,7 +428,7 @@ module.exports = {
 				{turning: false, target:'body', points: this.pointsBody},
 			];
 
-			var match = this;
+			var mat = this;
 
 			var player = data.player;
 			var target = data.target;
@@ -439,9 +439,9 @@ module.exports = {
 			var source = data.source;
 			var aggregatePoints = 0;
 			
-			var id = match.id;
-			var scoreTimeout = match.scoreTimeout;
-			var agree = match.agree;
+			var id = mat.id;
+			var scoreTimeout = mat.scoreTimeout;
+			var agree = mat.agree;
 
 			var judges = this.getJudgeArray();
 			var judgeIsInList = false;
@@ -454,7 +454,7 @@ module.exports = {
 			});
 
 			if(!judgeIsInList) {
-				log.error('Device ' + source + ' is not registered for match ' + this.match);
+				log.error('Device ' + source + ' is not registered for mat ' + this.mat);
 				return;
 			}
 
@@ -508,11 +508,11 @@ module.exports = {
 
 					scoreBuffer[id][player] = [];
 
-					//match.points(player, aggregatePoints);
-					// CAN'T USE the 'match' var here - it's the match from a second ago!
+					//mat.points(player, aggregatePoints);
+					// CAN'T USE the 'mat' var here - it's the mat from a second ago!
 					// Get it from the db again to be sure we are up to date!!!!!
-					Match.points(match.id,player,aggregatePoints, function(err, updatedMatch) {
-						match = updatedMatch;
+					Mat.points(mat.id,player,aggregatePoints, function(err, updatedMatch) {
+						mat = updatedMatch;
 					});
 					
 				}, scoreTimeout);
@@ -524,7 +524,7 @@ module.exports = {
 			if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
 				scoreBuffer[id][player].push({source: source, points: points});
 				
-				log.match(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
+				log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
 			
 			} else {
 				//Check if the source already exist in array? if not, add the data
@@ -540,7 +540,7 @@ module.exports = {
 				if(!alreadyGotIt) {
 					scoreBuffer[id][player].push({source: source, points: points});
 				
-				 	log.match(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
+				 	log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
 				}
 			}
 			return data; // Return modified data... namely adds the points property
@@ -564,7 +564,7 @@ module.exports = {
 
 		if(!values.number) {
 			// find the highest 'number' and make it the next highest by default
-			Match.find({ 
+			Mat.find({ 
 				where: { /* need to find parent id when implemented */ },  
 				limit: 1,
 				sort: 'number DESC',
@@ -598,7 +598,7 @@ module.exports = {
 		// Save to memory
 		/*
 		if(record.matchStatus !== 'complete') {
-			MatchService.matchStore.save(record);
+			MatService.matchStore.save(record);
 		}
 		*/
 		next();
@@ -608,11 +608,11 @@ module.exports = {
 		// Save to memory
 		/*
 		if(record.matchStatus !== 'complete') {
-			MatchService.matchStore.save(record);
+			MatService.matchStore.save(record);
 		}
 		*/
-		// Publish the match update to all subscribed clients
-		Match.publishUpdate(record.id, record);
+		// Publish the mat update to all subscribed clients
+		Mat.publishUpdate(record.id, record);
 		next();
 	},
 
@@ -622,116 +622,116 @@ module.exports = {
 
 	//////// Collection Methods ///////////
 	toString: function() {
-		return "[model " + "Match" + "Model]";
+		return "[model " + "Mat" + "Model]";
 	},
     
 
 	pauseResumeMatch: function(id, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.pauseResume(cb); 
+			mat.pauseResume(cb); 
 		});
 	},
 
 	resetMatch: function(id, cb) {
 
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.resetMatch(cb);
+			mat.resetMatch(cb);
 		});
 	},
 
 
 	resetTimer: function(id, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.resetTimer(cb);
+			mat.resetTimer(cb);
 		});
 	},
 
 	points: function(id, player, points, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.points(player, points, cb);
+			mat.points(player, points, cb);
 		});
 	},
 
 	changeRound: function(id, value, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.changeRound(value, cb);
+			mat.changeRound(value, cb);
 		});
 	},
 
 	penalties: function(id, player, points, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.penalties(player, points, cb);
+			mat.penalties(player, points, cb);
 		});
 	},
 
 	registerScore: function(id, data, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			var newData = match.registerScore(data);
-			newData.match = match;
+			var newData = mat.registerScore(data);
+			newData.mat = mat;
 			cb(null, newData);
 		});
 	},
 
-	completeMatch: function(match) {
-		match.matchStatus = 'complete';
-		//match.roundTimeMS = MatchService.roundTimer[match.id];
-		//match.breakTimeMS = MatchService.breakTimer[match.id];
+	completeMatch: function(mat) {
+		mat.matchStatus = 'complete';
+		//mat.roundTimeMS = MatService.roundTimer[mat.id];
+		//mat.breakTimeMS = MatService.breakTimer[mat.id];
 		////// TODO - REMOVE MATCH FROM MEMORY ********//
-		//MatchService.matchStore.remove(match.id);
+		//MatService.matchStore.remove(mat.id);
 	},
 
 	soundhorn: function(id) {
 		this.sendmessage(id, 'soundhorn');
 	},
 
-	sendmessage: function(match, event, data) {
+	sendmessage: function(mat, event, data) {
 		var id = null;
-		if(typeof match === 'number') {
-			id = match;
+		if(typeof mat === 'number') {
+			id = mat;
 		} else {
-			id = match.id;
+			id = mat.id;
 		}
-		var room = 'sails_model_match_' + id + ':message';
+		var room = 'sails_model_mat_' + id + ':message';
 		sails.log.silly('Published data to ' + room + ' Event: ' + event, data);
 		sails.sockets.broadcast(room, event, data);
 	},
 
 	registerJudge: function(id, indentifier, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.registerJudge(indentifier, cb);
+			mat.registerJudge(indentifier, cb);
 		});
 	},
 
 	removeJudge: function(id, num, cb) {
-		Match.findOne(id, function(err, match) {
+		Mat.findOne(id, function(err, mat) {
 			if(err) {return cb(err);}
-			if(!match) {return cb(null, null);}
+			if(!mat) {return cb(null, null);}
 
-			match.removeJudge(num, cb);
+			mat.removeJudge(num, cb);
 		});
 	},
 

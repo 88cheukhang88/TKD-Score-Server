@@ -6,7 +6,7 @@ var self = this;
 var testData = this;
 
 
-this.matches = [
+this.mats = [
 	{
 		id: 1,
 	},
@@ -17,15 +17,15 @@ this.matches = [
 
 var beforeFunctions = {
 
-  matches: function(done) {
-    Match.create(self.matches).exec(done);
+  mats: function(done) {
+    Mat.create(self.mats).exec(done);
   },
 
 };
 
 var afterFunctions = {
   destroyMatches: function(done) {
-    Match.destroy(done);
+    Mat.destroy(done);
   },
   
 

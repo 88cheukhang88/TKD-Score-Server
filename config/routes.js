@@ -4,12 +4,12 @@
  *
  * Your routes map URLs to views and controllers.
  *
- * If Sails receives a URL that doesn't match any of the routes below,
+ * If Sails receives a URL that doesn't mat any of the routes below,
  * it will check for matching files (images, scripts, stylesheets, etc.)
  * in your assets directory.  e.g. `http://localhost:1337/images/foo.jpg`
- * might match an image file: `/assets/images/foo.jpg`
+ * might mat an image file: `/assets/images/foo.jpg`
  *
- * Finally, if those don't match either, the default 404 handler is triggered.
+ * Finally, if those don't mat either, the default 404 handler is triggered.
  * See `config/404.js` to adjust your app's 404 logic.
  *
  * Note: Sails doesn't ACTUALLY serve stuff from `assets`-- the default Gruntfile in Sails copies
@@ -42,7 +42,7 @@ module.exports.routes = {
   *                                                                          *
   * Custom routes here...                                                    *
   *                                                                          *
-  *  If a request to a URL doesn't match any of the custom routes above, it  *
+  *  If a request to a URL doesn't mat any of the custom routes above, it  *
   * is matched against Sails route blueprints. See `config/blueprints.js`    *
   * for configuration options and examples.                                  *
   *                                                                          *
@@ -67,53 +67,53 @@ module.exports.routes = {
 
 
 
-    'post /api/match/controls/pauseresume': {
-        controller: "Match",
+    'post /api/mat/controls/pauseresume': {
+        controller: "Mat",
         action: "pauseResume",
     },
 
-    'post /api/match/controls/points': {
-        controller: "Match",
+    'post /api/mat/controls/points': {
+        controller: "Mat",
         action: "points",
     },
 
-    'post /api/match/controls/penalties': {
-        controller: "Match",
+    'post /api/mat/controls/penalties': {
+        controller: "Mat",
         action: "penalties",
     },
 
-    'post /api/match/controls/changeRound': {
-        controller: "Match",
+    'post /api/mat/controls/changeRound': {
+        controller: "Mat",
         action: "changeRound",
     },
 
-    'post /api/match/controls/resetTimer': {
-        controller: "Match",
+    'post /api/mat/controls/resetTimer': {
+        controller: "Mat",
         action: "resetTimer",
     },
 
-    'post /api/match/controls/resetMatch': {
-        controller: "Match",
-        action: "resetMatch",
+    'post /api/mat/controls/resetMat': {
+        controller: "Mat",
+        action: "resetMat",
     },
 
-    'post /api/match/controls/soundhorn': {
-        controller: "Match",
+    'post /api/mat/controls/soundhorn': {
+        controller: "Mat",
         action: "soundhorn",
     },
 
-    'post /api/match/controls/registerscore': {
-        controller: "Match",
+    'post /api/mat/controls/registerscore': {
+        controller: "Mat",
         action: "registerscore",
     },
 
-    'post /api/match/removejudge': {
-        controller: "Match",
+    'post /api/mat/removejudge': {
+        controller: "Mat",
         action: "removeJudge",
     },
 
-    'post /api/match/judge': {
-        controller: "Match",
+    'post /api/mat/judge': {
+        controller: "Mat",
         action: "registerJudge",
     },
 

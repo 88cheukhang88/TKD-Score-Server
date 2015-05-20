@@ -4,22 +4,24 @@ var myCustomLevels = {
     levels: {
     	msg: 10,
     	error: 9,
-        match: 8,
+        mat: 8,
     	warn: 7,
     	info: 6,
     	debug: 5,
     	verbose: 4,
     	silly: 3,
+        clock: 1,
     },
     colors: {
     	msg: 'white',
     	error: 'red',
-        match: 'magenta',
+        mat: 'magenta',
     	warn: 'yellow',
     	info: 'cyan',
   		debug: 'blue',
 		verbose: 'green',
 		silly: 'rainbow',
+        clock: 'grey',
     }
 };
 
