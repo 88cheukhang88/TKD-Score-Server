@@ -109,6 +109,11 @@ module.exports = {
 			defaultsTo: false,
 		},
 
+		novice: {
+			type: 'boolean',
+			defaultsTo: false,
+		},
+
 		judge1: {
 			type: 'string',
 		},
