@@ -12,11 +12,31 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
 
+		nodewebkit: {
+		    options: {
+		    	"node-main": 'app.js',
+		    	main: 'web/index.html',
+		    	version: "0.12.2",
+		        platforms: ['osx64'],
+		        buildDir: './webkitbuilds', // Where the build version of my node-webkit app is saved
+		    },
+		    src: ['**'] // Your node-webkit app
+		 },
+
 		nodemon: {
 		  	dev: {
 		    	script: 'app.js',
 		    	
+		  	},
+		  	production: {
+		    	script: 'app.js',
+		    	options: {
+		    		env: {
+		    			NODE_ENV:'production',
+		    		},
+		    	}
 		  	}
+
 		},
 
 		'node-inspector': {
@@ -133,14 +153,17 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-mocha-test');
 	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-nodemon');
+	grunt.loadNpmTasks('grunt-node-webkit-builder');
 	grunt.loadNpmTasks('grunt-node-inspector');
 	grunt.loadNpmTasks('grunt-sftp-deploy');
 
 
 	grunt.registerTask('serve', 'Starts the server with nodemon', ['nodemon:dev']);
+	grunt.registerTask('launch', 'Starts the server with nodemon in production mode', ['nodemon:production']);
+	grunt.registerTask('build', 'Builds executables', ['nodewebkit']);
 	grunt.registerTask('debug', 'Starts the server using node inspector', ['node-inspector:dev']);
 	grunt.registerTask('deploy:staging', 'Deploys to staging server', ['sftp-deploy:staging']);
-
+	grunt.registerTask('prod',[]);
 
 	grunt.registerTask('test', 'Runs Mocha tests add --watch for continuous', function () {
 		

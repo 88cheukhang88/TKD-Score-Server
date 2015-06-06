@@ -38,6 +38,8 @@ module.exports.routes = {
   },
 */
 
+
+
   /***************************************************************************
   *                                                                          *
   * Custom routes here...                                                    *
@@ -105,6 +107,11 @@ module.exports.routes = {
     'post /api/mat/controls/registerscore': {
         controller: "Mat",
         action: "registerscore",
+    },
+
+    'post /api/mat/controls/registerturn': {
+        controller: "Mat",
+        action: "registerturn",
     },
 
     'post /api/mat/removejudge': {

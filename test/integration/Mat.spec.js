@@ -63,7 +63,7 @@ describe('Mat Model', function() {
 
 	describe('Mat Scoring', function() {
 
-		it('should correctly assess 2 judge scoring 2 points (= 2 points)', function(done) {
+		it('should correctly assess 2 judge scoring 2x BT (= 2 points)', function(done) {
 			var record = {
 				agree: 2,
 				scoreTimeout: 200,
@@ -73,6 +73,7 @@ describe('Mat Model', function() {
 				pointsBodyTurning: 2,
 				pointsHead: 3,
 				pointsHeadTurning: 4,
+				judgeTurning: true,
 			};
 
 			Mat.create(record).exec(function(err, mat) {
@@ -107,7 +108,7 @@ describe('Mat Model', function() {
 			});
 		});
 
-		it('should correctly assess 2 judge scoring 2 points and 1 point (= 1 point)', function(done) {
+		it('should correctly assess 2 judge scoring 1xB and 1x BT (= 1 point)', function(done) {
 			var record = {
 				agree: 2,
 				scoreTimeout: 200,
@@ -117,6 +118,7 @@ describe('Mat Model', function() {
 				pointsBodyTurning: 2,
 				pointsHead: 3,
 				pointsHeadTurning: 4,
+				judgeTurning: true,
 			};
 
 			Mat.create(record).exec(function(err, mat) {
@@ -151,7 +153,7 @@ describe('Mat Model', function() {
 			});
 		});
 
-		it('should correctly assess 2 judge scoring 3 points with 1 late (= 0 points)', function(done) {
+		it('should correctly assess 2 judge scoring 2x H with 1 late (= 0 points)', function(done) {
 			var record = {
 				agree: 2,
 				scoreTimeout: 200,
@@ -161,6 +163,7 @@ describe('Mat Model', function() {
 				pointsBodyTurning: 2,
 				pointsHead: 3,
 				pointsHeadTurning: 4,
+				judgeTurning: true,
 			};
 
 			Mat.create(record).exec(function(err, mat) {
@@ -190,6 +193,105 @@ describe('Mat Model', function() {
 						done();
 					});
 				}, 300);
+			});
+		});
+
+		it('should correctly assess 2 judge scoring 2x B with master registering turn (= 2 points)', function(done) {
+			var record = {
+				agree: 2,
+				scoreTimeout: 200,
+				judge1: '10101',
+				judge2: '10102',
+				pointsBody: 1,
+				pointsBodyTurning: 2,
+				pointsHead: 3,
+				pointsHeadTurning: 4,
+				judgeTurning: false,
+			};
+
+			Mat.create(record).exec(function(err, mat) {
+
+				mat.registerScore({
+					source:'10101',
+					player:1,
+					target:'body',
+					turning: false,
+				});
+
+				setTimeout(function() {
+					expect(mat.player1Points).to.equal(0);
+				}, 50);
+
+				setTimeout(function() {
+					mat.registerScore({
+						source:'10102',
+						player:1,
+						target:'body',
+						turning: false,
+					});
+				}, 100);
+
+				setTimeout(function() {
+					mat.registerTurn({
+						player:1,
+					});
+				}, 150);
+
+				setTimeout(function() {
+					// Register score may blindly update the points - we need to re-get the reference to test
+					Mat.findOne(mat.id).exec(function(err, updatedMatch) {
+						expect(updatedMatch.player1Points).to.equal(2);
+						done();
+					});
+				}, 250);
+			});
+		});
+
+ 
+		it('should correctly assess 2 judge scoring 2x B with master NOT registering turn (= 1 points)', function(done) {
+			var record = {
+				agree: 2,
+				scoreTimeout: 200,
+				judge1: '10101',
+				judge2: '10102',
+				pointsBody: 1,
+				pointsBodyTurning: 2,
+				pointsHead: 3,
+				pointsHeadTurning: 4,
+				judgeTurning: false,
+			};
+
+			Mat.create(record).exec(function(err, mat) {
+
+				mat.registerScore({
+					source:'10101',
+					player:1,
+					target:'body',
+					turning: true,
+				});
+
+				setTimeout(function() {
+					expect(mat.player1Points).to.equal(0);
+				}, 50);
+
+				setTimeout(function() {
+					mat.registerScore({
+						source:'10102',
+						player:1,
+						target:'body',
+						turning: true,
+					});
+				}, 100);
+
+				
+
+				setTimeout(function() {
+					// Register score may blindly update the points - we need to re-get the reference to test
+					Mat.findOne(mat.id).exec(function(err, updatedMatch) {
+						expect(updatedMatch.player1Points).to.equal(1);
+						done();
+					});
+				}, 250);
 			});
 		});
 	});

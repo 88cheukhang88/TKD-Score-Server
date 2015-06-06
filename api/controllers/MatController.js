@@ -84,6 +84,18 @@ module.exports = {
 		});
 	},
 
+	registerTurn: function(req, res, next) {
+		var id = req.param('id');
+
+		var data = {
+			player: req.param('player'),
+		};
+
+		Mat.registerTurn(id, data, function(err, newData) {
+			if(err) {return log.error(err);}
+		});
+	},
+
 	registerJudge: function (req, res, next) {
 
 		var identifier = req.session.ident;

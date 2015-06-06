@@ -1,9 +1,22 @@
 var scoreBuffer = [];
 var scoreTimer = [];
 
+function initScoreBuffer(id) {
+	if(!scoreBuffer[id]) {
+		scoreBuffer[id] = [];
+		scoreBuffer[id][1] = [];
+		scoreBuffer[id][2] = [];
+	}
+}
+
 module.exports = {
 
 	attributes: {
+
+		match: {
+	    	collection: 'Match',
+	    	via: 'mat',
+	    },
 
 		number: {
 			type: 'integer',
@@ -96,15 +109,20 @@ module.exports = {
 
 		pointsHead: {
 			type: 'integer',
-			defaultsTo: 4,
+			defaultsTo: 3,
 		},
 
 		pointsHeadTurning: {
 			type: 'integer',
-			defaultsTo: 5,
+			defaultsTo: 4,
 		},
 
 		showIndicators: {
+			type: 'boolean',
+			defaultsTo: false,
+		},
+
+		judgeTurning: {
 			type: 'boolean',
 			defaultsTo: false,
 		},
@@ -422,9 +440,28 @@ module.exports = {
 			return pauseWatch[this.id];
 		},
 
-		registerScore: function(data) {
+
+
+		registerTurn: function (data) {
+			var mat = this;
+			var id = mat.id;
+			var player = data.player;
+
+			// just do both for now - bit only if the buffer is in play
+			initScoreBuffer(id);
+
+			if(scoreBuffer[id][1].active) {
+				scoreBuffer[id][1].turning = true;
+			}
+			if(scoreBuffer[id][2].active) {
+				scoreBuffer[id][2].turning = true;
+			}
 
 			
+			
+		},
+
+		registerScore: function(data) {
 
 			var points_table = [
 				{turning: true, target:'head', points: this.pointsHeadTurning},
@@ -439,8 +476,6 @@ module.exports = {
 			var target = data.target;
 			var turning = data.turning || false;
 
-			var points = _.result(_.find(points_table, {turning:turning, target:target}), 'points');
-			data.points = points;
 			var source = data.source;
 			var aggregatePoints = 0;
 			
@@ -463,13 +498,7 @@ module.exports = {
 				return;
 			}
 
-			if(!scoreBuffer[id]) {
-				scoreBuffer[id] = [];
-			}
-
-			if(!scoreBuffer[id][player]) {
-				scoreBuffer[id][player] = [];
-			}
+			initScoreBuffer(id);
 
 			if(!scoreTimer[id]) {
 				scoreTimer[id] = [];
@@ -481,18 +510,44 @@ module.exports = {
 				/// Set the timer to add the score and clear the score buffer
 				scoreTimer[id][player] = setTimeout(function(){
 					
+
 					if(scoreBuffer[id][player].length >= agree) { //if enough judges have scored **** THIS IS NOT THE END - JUDGES MAY STILL VOTE, IT JUST GETS REPROCESSED UNTIL THE TIMER RUNS OUT
+						
+						var isTurning = false;
+
+						if(mat.judgeTurning) {
+							var turningCount = 0;
+							_.forEach(scoreBuffer[id][player], function(pointsObj) {
+								if(pointsObj.turning) {
+									turningCount++;
+								}
+							}); 
+							if(turningCount >= mat.agree) {
+								isTurning = true;
+							}
+						} else {
+							isTurning = scoreBuffer[id][player].turning || false;
+						}
+
+						console.log("IS TURNING: ", isTurning); 
+
+						var votedPoints = [];
+						_.forEach(scoreBuffer[id][player], function(pointsObj) { 
+							votedPoints.push(_.result(_.find(points_table, {turning:isTurning, target:pointsObj.target}), 'points'));
+						});
+
+
 						var high = 0;
 						var low = 5;
 						var scoreCount = [0,0,0,0,0];
-						_.forEach(scoreBuffer[id][player], function(pointsObj) {
+						_.forEach(votedPoints, function(points) {
 							///// compare scores in buffer - set the lowest and hifgest scores given
 							
-							low = Math.min(pointsObj.points,low);
-							high = Math.max(pointsObj.points,high);
+							low = Math.min(points,low);
+							high = Math.max(points,high);
 							
 							//// how votes for each score (1-4)
-							scoreCount[pointsObj.points] += 1;
+							scoreCount[points] += 1;
 						});
 						
 						/// Set the score to be awarded as the lowest value given (just in case they don't all agree - but enough have voted at least 1 point
@@ -527,9 +582,9 @@ module.exports = {
 			var playerString = (player === 1) ? this.player1 : this.player2;
 			// Push the score into the vote buffer
 			if(!scoreBuffer[id][player].length) { // need to add the first one regeardless
-				scoreBuffer[id][player].push({source: source, points: points});
-				
-				log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
+				scoreBuffer[id][player].push({source: source, target: data.target, turning: data.turning});
+				scoreBuffer[id][player].active = true;
+				log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + data.target + ' turning ' + data.turning);
 			
 			} else {
 				//Check if the source already exist in array? if not, add the data
@@ -543,9 +598,9 @@ module.exports = {
 					
 				// if the judge has not already cast a vote - add this judges score to the buffer
 				if(!alreadyGotIt) {
-					scoreBuffer[id][player].push({source: source, points: points});
+					scoreBuffer[id][player].push({source: source, target: data.target, turning: data.turning});
 				
-				 	log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + points + ' points');
+				 	log.mat(this.toString() + ': ' + source + ' voted ' + playerString + ' ' + data.target + ' turning ' + data.turning);
 				}
 			}
 			return data; // Return modified data... namely adds the points property
@@ -698,6 +753,16 @@ module.exports = {
 		});
 	},
 
+	registerTurn: function(id, data, cb) {
+		Mat.findOne(id, function(err, mat) {
+			if(err) {return cb(err);}
+			if(!mat) {return cb(null, null);}
+
+			mat.registerTurn(data);
+			cb(null, {});
+		});
+	},
+
 	completeMatch: function(mat) {
 		mat.matchStatus = 'complete';
 		//mat.roundTimeMS = MatService.roundTimer[mat.id];
@@ -730,6 +795,8 @@ module.exports = {
 			mat.registerJudge(indentifier, cb);
 		});
 	},
+
+
 
 	removeJudge: function(id, num, cb) {
 		Mat.findOne(id, function(err, mat) {

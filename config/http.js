@@ -9,6 +9,14 @@
  * http://sailsjs.org/#/documentation/reference/sails.config/sails.config.http.html
  */
 
+var express = require('sails/node_modules/express');
+module.exports.express = {
+  customMiddleware: function (app) {
+      app.use('/', express.static(process.cwd() + '/web'));
+    }
+};
+
+
 module.exports.http = {
 
   /****************************************************************************
@@ -42,6 +50,7 @@ module.exports.http = {
        'poweredBy',
        '$custom',
        'router',
+       'staticWeb',
        'www',
        'favicon',
        '404',
@@ -58,6 +67,8 @@ module.exports.http = {
     //     console.log("Requested :: ", req.method, req.url);
     //     return next();
     // }
+
+
 
 
 

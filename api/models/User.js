@@ -5,7 +5,7 @@
  * @description :: A short summary of how this model works and what it represents.
  *
  */
-var bcrypt = require('bcrypt');
+//var bcrypt = require('bcrypt');
 
 
 module.exports = {
@@ -243,7 +243,7 @@ module.exports = {
     next();
   },
 
-
+/*
   beforeCreate: function(values, next) {
     //Encrypt password for storage
     bcrypt.hash(values.password, 10, function setEncryptedPassword(err, encryptedPassword){
@@ -264,6 +264,7 @@ module.exports = {
 	  	next();
 	}
   },
+ */
 };
 
 
