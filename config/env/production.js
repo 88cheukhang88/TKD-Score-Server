@@ -34,6 +34,10 @@ module.exports = {
 
   log: {
     level: "silent"
-  }
+  },
+
+  paths: {
+    public: process.cwd() + '/web'
+  },
 
 };

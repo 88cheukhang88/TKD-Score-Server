@@ -8,14 +8,14 @@
  * For more information on configuration, check out:
  * http://sailsjs.org/#/documentation/reference/sails.config/sails.config.http.html
  */
-
+/*
 var express = require('sails/node_modules/express');
 module.exports.express = {
   customMiddleware: function (app) {
       app.use('/', express.static(process.cwd() + '/web'));
     }
 };
-
+*/
 
 module.exports.http = {
 
