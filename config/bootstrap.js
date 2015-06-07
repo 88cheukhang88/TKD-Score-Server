@@ -56,7 +56,6 @@ module.exports.bootstrap = function(cb) {
 	    console.log();
 
 	    
-	    console.log(sails.config.paths);
 	});
 
   // It's very important to trigger this callback method when you are finished
