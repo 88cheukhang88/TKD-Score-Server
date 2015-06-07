@@ -150,7 +150,7 @@ module.exports = {
 
 
 		toString: function() {
-			return '[mat] ' + this.player1 + ' vs. ' + this.player2;
+			return '[mat] ' + this.number;
 		},
 
 		getJudgeArray: function() {
@@ -529,8 +529,6 @@ module.exports = {
 							isTurning = scoreBuffer[id][player].turning || false;
 						}
 
-						console.log("IS TURNING: ", isTurning); 
-
 						var votedPoints = [];
 						_.forEach(scoreBuffer[id][player], function(pointsObj) { 
 							votedPoints.push(_.result(_.find(points_table, {turning:isTurning, target:pointsObj.target}), 'points'));
@@ -782,7 +780,9 @@ module.exports = {
 		} else {
 			id = mat.id;
 		}
+		var data = data || {};
 		var room = 'sails_model_mat_' + id + ':message';
+		data.id = id;
 		sails.log.silly('Published data to ' + room + ' Event: ' + event, data);
 		sails.sockets.broadcast(room, event, data);
 	},

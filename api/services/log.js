@@ -2,9 +2,9 @@ var winston = require('winston');
 
 var myCustomLevels = {
     levels: {
+        mat: 11,
     	msg: 10,
     	error: 9,
-        mat: 8,
     	warn: 7,
     	info: 6,
     	debug: 5,
@@ -13,7 +13,7 @@ var myCustomLevels = {
         clock: 1,
     },
     colors: {
-    	msg: 'white',
+        msg: 'white',
     	error: 'red',
         mat: 'magenta',
     	warn: 'yellow',
@@ -30,7 +30,13 @@ var logger = new (winston.Logger)({
 	levels: myCustomLevels.levels,
 }); 
 
-logger.add(winston.transports.Console, {colorize: true, level:sails.config.log.level});
+var loglevel = sails.config.log.level;
+if (sails.config.environment === 'production') {
+    loglevel = 'mat';
+}
+
+logger.add(winston.transports.Console, {colorize: true, level:loglevel});
+
 
 winston.addColors(myCustomLevels.colors);
 

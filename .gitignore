@@ -70,6 +70,7 @@ node_modules
 bower_components
 web
 enclose_compile.js
+dist
 
 
 

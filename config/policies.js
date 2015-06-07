@@ -67,6 +67,11 @@ module.exports.policies = {
     //'update': ['sessionAuth', 'userAuth'],
   },
 
+  MatController: {
+    'find': ['unsubscribeModel'],
+    'findOne': ['unsubscribeModel'],
+  },
+
 
 
 

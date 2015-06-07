@@ -44,7 +44,8 @@ module.exports = function findRecords (req, res) {
   // of the `id` param.   (mainly here for compatibility for 0.9, where
   // there was no separate `findOne` action)
   if ( actionUtil.parsePk(req) ) {
-    return require('../../node_modules/sails/lib/hooks/blueprints/actions/findOne')(req,res);
+    //return require('../../node_modules/sails/lib/hooks/blueprints/actions/fineOne')(req,res);
+
   }
 
 
@@ -90,7 +91,12 @@ module.exports = function findRecords (req, res) {
     // Only `.watch()` for new instances of the model if
     // `autoWatch` is enabled.
     if (req._sails.hooks.pubsub && req.isSocket) {
+
       Model.subscribe(req, matchingRecords);
+      log.silly(req.socket.id, ' subscribing to');
+      _.each(matchingRecords, function(record) {
+        log.silly(record.toString());
+      })
       if (req.options.autoWatch) { Model.watch(req); }
       // Also subscribe to instances of all associated models
       _.each(matchingRecords, function (record) {
