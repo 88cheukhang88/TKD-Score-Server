@@ -36,6 +36,9 @@ module.exports = {
 
   log: {
     level: "debug"
-  }
+  },
 
+  paths: {
+    public: process.cwd() + '/web'
+   },
 };

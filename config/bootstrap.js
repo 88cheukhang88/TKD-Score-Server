@@ -54,6 +54,7 @@ module.exports.bootstrap = function(cb) {
 	    
 	    console.log(chalk.grey('--------------------------------------'));
 	    console.log();
+
 	});
 
   // It's very important to trigger this callback method when you are finished
