@@ -148,6 +148,11 @@ module.exports = {
 			type: 'string',
 		},
 
+		winner: {
+			type: 'integer',
+			defaultsTo: 0,
+		},
+
 
 		toString: function() {
 			return '[mat] ' + this.number;
@@ -161,6 +166,23 @@ module.exports = {
 				this.judge4,
 			];
 			return judges;
+		},
+
+		declareWinner: function(winner, cb) {
+			this.winner = winner || 0;
+			var winnertext = '';
+			switch(winner) {
+				case 1:
+					winnertext = 'Hong';
+					break;
+				case 2:
+					winnertext = 'Chong';
+					break;
+				default:
+					winnertext = 'None';
+			}
+			log.mat(this.toString() + ': Winner declared - ' + winnertext);
+			this.save(cb);
 		},
 
 
@@ -187,7 +209,7 @@ module.exports = {
 				}
 			});
 
-			log.mat('Registering Judge ' + identifier + ' into slot ' + judge);
+			log.mat(this.toString() = ': Registering Judge ' + identifier + ' into slot ' + judge);
 			
 			if(judge !== false) {
 			
@@ -806,6 +828,15 @@ module.exports = {
 			mat.removeJudge(num, cb);
 		});
 	},
+
+	declareWinner: function(id, winner, cb) {
+		Mat.findOne(id, function(err, mat) {
+			if(err) {return cb(err);}
+			if(!mat) {return cb(null, null);}
+
+			mat.declareWinner(winner, cb);
+		});
+	}
 
 
 

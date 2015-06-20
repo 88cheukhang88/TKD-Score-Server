@@ -107,7 +107,7 @@
 						log.mat('Round Done - going sudden death: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 						
 					} else {
-						// End of mat
+						// End of match after sudden death
 						
 						Mat.completeMatch(updatedMatch);
 						log.mat('Mat Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
@@ -115,6 +115,7 @@
 					}
 				}
 				else {
+					// no more rounds - end
 					Mat.completeMatch(updatedMatch);
 					log.mat('Mat Done: ' + updatedMatch.id + '. Status old: ' + oldStatus + ' now: ' + updatedMatch.matchStatus);
 					

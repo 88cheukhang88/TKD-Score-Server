@@ -114,4 +114,12 @@ module.exports = {
 			if(err) {return log.error(err);}
 		});
 	},
+
+	declareWinner: function(req, res, next) {
+		var winner = req.param('winner');
+		var id = req.param('id');
+		Mat.declareWinner(id, winner, function(err, mat) {
+			if(err) {return log.error(err);}
+		});
+	},
 };

@@ -126,6 +126,11 @@ module.exports.routes = {
         action: "registerJudge",
     },
 
+    'post /api/mat/winner': {
+        controller: "Mat",
+        action: "declareWinner",
+    },
+
 
 
 };
