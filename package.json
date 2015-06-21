@@ -2,7 +2,8 @@
   "name": "TkdScoreServer",
   "private": true,
   "version": "0.5.0",
-  "description": "a Sails application",
+  "license": "AGPL-3.0",
+  "description": "A websocket Taekwondo scoring system",
   "keywords": [],
   "dependencies": {
     "chalk": "^1.0.0",
@@ -33,7 +34,7 @@
     "sails-mysql": "^0.10.12",
     "skipper": "^0.5.2",
     "socketio-wildcard": "^0.1.1",
-    "timer-stopwatch": "git://github.com/mickcrozier/timer-stopwatch.git#master",
+    "timer-stopwatch": "~0.1.6",
     "validator": "^3.24.0",
     "winston": "^0.7.3"
   },
@@ -44,9 +45,9 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mick/tvurback.git"
+    "url": "git://github.com/MickCrozier/TKD-Score-Server"
   },
-  "author": "mick",
+  "author": "Mick Crozier",
   "license": "",
   "devDependencies": {
     "expect.js": "^0.3.1",
