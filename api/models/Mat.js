@@ -228,7 +228,7 @@ module.exports = {
 				}
 			});
 
-			log.mat(this.toString() = ': Registering Judge ' + identifier + ' into slot ' + judge);
+			log.mat(this.toString() + ': Registering Judge ' + identifier + ' into slot ' + judge);
 			
 			if(judge !== false) {
 			

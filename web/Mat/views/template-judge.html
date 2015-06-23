@@ -1,1 +1,17 @@
-<div id="main" name="main" class="scoreboard-judge"> <div id="scorechong" class="scoreboard-left"> <div id="scorechong-head" class="scoreboard-score-zone-top" ng-click="matJudgeVm.tap(1, 'head'); stopPropagation();" ng-hide="matJudgeVm.mat.novice">Head</div> <div id="scorechong-body" ng-class="{'scoreboard-score-zone-full':matJudgeVm.mat.novice, 'scoreboard-score-zone-bottom':!matJudgeVm.mat.novice}" ng-click="matJudgeVm.tap(1, 'body'); stopPropagation();">Body</div> </div> <div id="scorehong" class="scoreboard-right"> <div id="scorehong-head" class="scoreboard-score-zone-top" ng-click="matJudgeVm.tap(2, 'head'); stopPropagation();" ng-hide="matJudgeVm.mat.novice">Head</div> <div id="scorehong-body" ng-class="{'scoreboard-score-zone-full':matJudgeVm.mat.novice, 'scoreboard-score-zone-bottom':!matJudgeVm.mat.novice}" ng-click="matJudgeVm.tap(2, 'body'); stopPropagation();">Body</div> </div> <div style="position:absolute;width:100%; top:0; pointer-events:none"> <div id="displaylogo" class="scoreboard-logo"></div> </div> <div class="notregistered-overlay" ng-hide="matJudgeVm.registered()">Device needs to be registered for mat {{matJudgeVm.mat.number}} <button class="btn btn-primary btn-sm btn-block" ng-click="matJudgeVm.register()">Register Now</button> </div> <div class="registered-overlay" ng-show="matJudgeVm.registered()" ng-bind="'Mat ' + matJudgeVm.mat.number + ' ' + matJudgeVm.registered()"> </div> </div>
+<!--
+    This file is part of TKD Score Web.
+    Copyright 2015 Mick Crozier
+
+    TKD Score Web is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    TKD Score Web is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with TKD Score Web.  If not, see <http://www.gnu.org/licenses/>.
+--> <div id="main" name="main" class="scoreboard-judge"> <div id="scorechong" class="scoreboard-left"> <div id="scorechong-head" class="scoreboard-score-zone-top" ng-click="matJudgeVm.tap(1, 'head'); stopPropagation();" ng-hide="matJudgeVm.mat.novice">Head</div> <div id="scorechong-body" ng-class="{'scoreboard-score-zone-full':matJudgeVm.mat.novice, 'scoreboard-score-zone-bottom':!matJudgeVm.mat.novice}" ng-click="matJudgeVm.tap(1, 'body'); stopPropagation();">Body</div> </div> <div id="scorehong" class="scoreboard-right"> <div id="scorehong-head" class="scoreboard-score-zone-top" ng-click="matJudgeVm.tap(2, 'head'); stopPropagation();" ng-hide="matJudgeVm.mat.novice">Head</div> <div id="scorehong-body" ng-class="{'scoreboard-score-zone-full':matJudgeVm.mat.novice, 'scoreboard-score-zone-bottom':!matJudgeVm.mat.novice}" ng-click="matJudgeVm.tap(2, 'body'); stopPropagation();">Body</div> </div> <div style="position:absolute;width:100%; top:0; pointer-events:none"> <div id="displaylogo" class="scoreboard-logo"></div> </div> <div class="notregistered-overlay" ng-hide="matJudgeVm.registered()">Device needs to be registered for mat {{matJudgeVm.mat.number}} <button class="btn btn-primary btn-sm btn-block" ng-click="matJudgeVm.register()">Register Now</button> </div> <div class="registered-overlay" ng-show="matJudgeVm.registered()" ng-bind="'Mat ' + matJudgeVm.mat.number + ' ' + matJudgeVm.registered()"> </div> </div>

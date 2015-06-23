@@ -1,1 +1,17 @@
-<button class="btn btn-lg" ng-click="addRole()">New</button> <button class="btn btn-lg" ng-click="gotoMasterlist()">Master list</button> <div class="row"> <div class="col-sm-3">Callsign</div><div class="col-sm-7">Name</div><div class="col-sm-1">G</div><div class="col-sm-1">X</div> </div> <div ng-repeat="role in roles" class="row"> <input type="text" ng-model="role.callsign" name="callsign" class="col-sm-3" ng-blur="role.$save()" ng-required ng-maxlength="4"> <input type="text" ng-model="role.name" name="name" class="col-sm-7" ng-blur="role.$save()" ng-required> <button class="btn btn-sm" ng-click="gotoCuelist(role)" class="col-sm-1">G</button> <button class="btn btn-sm" ng-click="deleteRole(role)" class="col-sm-1">X</button> </div>
+<!--
+    This file is part of TKD Score Web.
+    Copyright 2015 Mick Crozier
+
+    TKD Score Web is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    TKD Score Web is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with TKD Score Web.  If not, see <http://www.gnu.org/licenses/>.
+--> <button class="btn btn-lg" ng-click="addRole()">New</button> <button class="btn btn-lg" ng-click="gotoMasterlist()">Master list</button> <div class="row"> <div class="col-sm-3">Callsign</div><div class="col-sm-7">Name</div><div class="col-sm-1">G</div><div class="col-sm-1">X</div> </div> <div ng-repeat="role in roles" class="row"> <input type="text" ng-model="role.callsign" name="callsign" class="col-sm-3" ng-blur="role.$save()" ng-required ng-maxlength="4"> <input type="text" ng-model="role.name" name="name" class="col-sm-7" ng-blur="role.$save()" ng-required> <button class="btn btn-sm" ng-click="gotoCuelist(role)" class="col-sm-1">G</button> <button class="btn btn-sm" ng-click="deleteRole(role)" class="col-sm-1">X</button> </div>
