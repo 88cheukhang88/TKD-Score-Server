@@ -358,7 +358,7 @@ module.exports = {
 
 
 		changeRound: function (round, cb) {
-			if(this.matchStatus === "break" && breakTimer[this.id].ms > breakTimer[this.id].almostDoneMS) {
+			if(this.matchStatus === "break" && MatService.breakTimer[this.id].ms < MatService.breakTimer[this.id].almostDoneMS) {
 				this.matchStatus = '_endbreakearly';
 				this.pauseResume();
 			} else {
