@@ -356,7 +356,6 @@ module.exports = {
 			this.save(cb);
 		},
 
-
 		changeRound: function (round, cb) {
 			if(this.matchStatus === "break" && MatService.breakTimer[this.id].ms < MatService.breakTimer[this.id].almostDoneMS) {
 				this.matchStatus = '_endbreakearly';
@@ -428,15 +427,7 @@ module.exports = {
 			this.breakTimeMS = this.breakLengthMS;
 			MatService.pauseWatch[this.id].reset();
 
-			/*   // we send the whole mat in the this.save()
-			if(io) {
-				io.in(this.id).emit('breaktime', {ms:this.breakTimeMS});
-			}
-			if(io) {
-				io.in(this.id).emit('pausetime', {ms:0});
-			}
-			*/
-			log.mat('Reseting Mat ' + this.toString());
+			log.mat('Resetting Mat ' + this.toString());
 
 			this.round = 1;
 			this.player1Points = 0;
@@ -444,6 +435,7 @@ module.exports = {
 			this.player1Penalties = 0;
 			this.player2Penalties = 0;
 			this.matchStatus = 'pending';
+			this.winner = 0;
 			this.save(cb);
 		},
 
