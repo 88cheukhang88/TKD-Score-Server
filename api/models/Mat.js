@@ -16,7 +16,7 @@
     along with TKD Score Server.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+ 
 var scoreBuffer = [];
 var scoreTimer = [];
 
@@ -175,6 +175,34 @@ module.exports = {
 
 		toString: function() {
 			return '[mat] ' + this.number;
+		},
+
+		/**
+		Checks if the match should end
+		*/
+		checkWinConditions: function() {
+			var mat = this;
+			function hasMoreRounds(mat) {
+
+			}
+
+			function hasPointDifference(mat) {
+
+			}
+
+			function hasMaxPenalties(mat) {
+
+			}
+
+			function hasSuddenDeathPoint(mat) {
+
+			}
+
+
+
+			hasMoreRounds(mat);
+			hasSuddenDeathPoint(mat);
+
 		},
 
 		getJudgeArray: function() {
@@ -357,21 +385,18 @@ module.exports = {
 		},
 
 		changeRound: function (round, cb) {
-			if(this.matchStatus === "break" && MatService.breakTimer[this.id].ms < MatService.breakTimer[this.id].almostDoneMS) {
-				this.matchStatus = '_endbreakearly';
-				this.pauseResume();
-			} else {
-				if(round > this.numberOfRounds + 1) {
-					round = this.numberOfRounds + 1;
-				}
 
-				if(round < 1 || typeof round !== 'number') {
-					round = 1;
-				}
-
-				this.round = round;
-				this.save(cb);
+			if(round > this.numberOfRounds + 1) {
+				round = this.numberOfRounds + 1;
 			}
+
+			if(round < 1 || typeof round !== 'number') {
+				round = 1;
+			}
+
+			this.round = round;
+			this.save(cb);
+			
 
 		},
 
