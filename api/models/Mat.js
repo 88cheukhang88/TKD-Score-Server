@@ -83,7 +83,7 @@ module.exports = {
 
 		roundLengthMS: {
 			type: 'integer',
-			defaultsTo: 120000,
+			defaultsTo: 120,
 		},
 
 		roundTimeMS: {
@@ -93,12 +93,12 @@ module.exports = {
 
 		breakLengthMS: {
 			type: 'integer',
-			defaultsTo: 60000,
+			defaultsTo: 60,
 		},
 
 		breakTimeMS: {
 			type: 'integer',
-			defaultsTo: 60000,
+			defaultsTo: 60,
 		},
 
 		matchStatus: {
@@ -138,7 +138,7 @@ module.exports = {
 
 		showIndicators: {
 			type: 'boolean',
-			defaultsTo: false,
+			defaultsTo: true,
 		},
 
 		judgeTurning: {
@@ -170,6 +170,11 @@ module.exports = {
 		winner: {
 			type: 'integer',
 			defaultsTo: 0,
+		},
+
+		endBreakHorn: {
+			type: 'boolean',
+			defaultsTo: true,
 		},
 
 
@@ -441,15 +446,15 @@ module.exports = {
 		resetMatch: function (cb) {
 			MatService.createTimers(this);
 
-			MatService.roundTimer[this.id].reset(this.roundLengthMS);
-			this.roundTimeMS = this.roundLengthMS;
+			MatService.roundTimer[this.id].reset(this.roundLengthMS * 1000);
+			this.roundTimeMS = this.roundLengthMS * 1000;
 			
 			Mat.sendmessage(this.id, 'roundtime', {ms:this.roundTimeMS});
 			
 
-			MatService.breakTimer[this.id].reset(this.breakLengthMS);
+			MatService.breakTimer[this.id].reset(this.breakLengthMS * 1000);
 			
-			this.breakTimeMS = this.breakLengthMS;
+			this.breakTimeMS = this.breakLengthMS * 1000;
 			MatService.pauseWatch[this.id].reset();
 
 			log.mat('Resetting Mat ' + this.toString());
@@ -674,8 +679,8 @@ module.exports = {
 
 	beforeCreate: function(values, next) {
 		if(values.matchStatus === 'pending') {
-			values.roundTimeMS = values.roundLengthMS;
-			values.breakLengthMS = values.breakLengthMS;
+			values.roundTimeMS = values.roundLengthMS * 1000;
+			values.breakTimeMS = values.breakLengthMS * 1000;
 		}
 
 		if(!values.number) {
@@ -704,8 +709,8 @@ module.exports = {
 
 	beforeUpdate: function(values, next) {
 		if(values.matchStatus === 'pending') {
-			values.roundTimeMS = values.roundLengthMS;
-			values.breakLengthMS = values.breakLengthMS;
+			values.roundTimeMS = values.roundLengthMS * 1000;
+			values.breakTimeMS = values.breakLengthMS * 1000;
 		}
 		next();
 	},

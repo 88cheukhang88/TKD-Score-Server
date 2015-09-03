@@ -71,14 +71,18 @@
 
 	    breakTimer[mat.id].on('time', function (time) {
 	    	//io.in(mat.id + "").emit('breaktime', time);
+	    	
 	    	Mat.sendmessage(mat, 'breaktime', time);
+	    	
 	    	//Mat.message(mat.id, {command:'breaktime', ms:time});
 	    });
 
 	    breakTimer[mat.id].on('almostdone', function () {
-	    	//io.in(mat.id + "").emit('soundhorn');
-
-	    	Mat.soundhorn(mat.id);
+	    	Mat.findOne(mat.id).exec(function(err, upToDateMat) {
+	    		if(upToDateMat.endBreakHorn) {
+	    			Mat.soundhorn(mat.id);
+	    		}
+	    	})
 	    });
 
 	    pauseWatch[mat.id].on('time', function (time) {
